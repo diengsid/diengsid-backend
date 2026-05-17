@@ -32,8 +32,7 @@ func (c *PropertyController) Create(ctx *fiber.Ctx) error {
 
 	response, err := c.PropertyUseCase.Create(ctx.UserContext(), req)
 	if err != nil {
-		c.Log.WithError(err).Error("failed to create property")
-		return fiber.ErrInternalServerError
+		return err
 	}
 
 	return ctx.JSON(model.WebResponse[model.PropertyResponse]{
