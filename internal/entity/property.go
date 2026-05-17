@@ -17,6 +17,7 @@ type Property struct {
 	Host       HostProfile `gorm:"foreignKey:HostID;references:ID;constraint:OnDelete:CASCADE"`
 	Experience Experience  `gorm:"foreignKey:ExperienceID;references:ID;constraint:OnDelete:CASCADE"`
 	Rentable   []Rentable
+	Amenities  []Amenity  `gorm:"many2many:property_amenities;"`
 
 	CreatedAt int64 `gorm:"column:created_at"`
 	UpdatedAt int64 `gorm:"column:updated_at"`

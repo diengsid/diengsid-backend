@@ -16,8 +16,9 @@ type Rentable struct {
 	Capacity   int     `gorm:"column:capacity"`
 	BasePrice  float64 `gorm:"column:base_price;not null"`
 	Discount   float64 `gorm:"column:discount"`
-	Stock      int     `gorm:"column:stock;not null;default:1"`
+	Stock      int      `gorm:"column:stock;not null;default:1"`
 	Property   Property
+	Amenities  []Amenity `gorm:"many2many:rentable_amenities;"`
 
 	CreatedAt int64 `gorm:"column:created_at"`
 	UpdatedAt int64 `gorm:"column:updated_at"`

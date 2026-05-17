@@ -22,12 +22,15 @@ func ClearAll() {
 	ClearBookings()
 	ClearAvailabilities()
 	ClearSessions()
+	ClearRentableAmenities()
+	ClearPropertyAmenities()
 	ClearRentables()
 	ClearProperties()
 	ClearHostProfiles()
 	ClearExperienceImages()
 	ClearExperiences()
 	ClearUsers()
+	ClearAmenities()
 }
 
 func ClearBookings() {
@@ -270,4 +273,30 @@ func ClearPayments() {
 	if err := db.Where("id IS NOT NULL").Delete(&entity.Payment{}).Error; err != nil {
 		log.Fatalf("failed to clear payments: %v", err)
 	}
+}
+
+func ClearRentableAmenities() {
+	if err := db.Exec("DELETE FROM rentable_amenities").Error; err != nil {
+		log.Fatalf("failed to clear rentable_amenities: %v", err)
+	}
+}
+
+func ClearPropertyAmenities() {
+	if err := db.Exec("DELETE FROM property_amenities").Error; err != nil {
+		log.Fatalf("failed to clear property_amenities: %v", err)
+	}
+}
+
+func ClearAmenities() {
+	if err := db.Where("id IS NOT NULL").Delete(&entity.Amenity{}).Error; err != nil {
+		log.Fatalf("failed to clear amenities: %v", err)
+	}
+}
+
+func SeedAmenity(name, icon, category string) *entity.Amenity {
+	a := &entity.Amenity{Name: name, Icon: icon, Category: category}
+	if err := db.Create(a).Error; err != nil {
+		log.Fatalf("failed to seed amenity: %v", err)
+	}
+	return a
 }

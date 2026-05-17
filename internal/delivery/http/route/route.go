@@ -22,6 +22,7 @@ type RouteConfig struct {
 	BookingController       *http.BookingController
 	AvailabilityController  *http.AvailabilityController
 	PaymentController       *http.PaymentController
+	AmenityController       *http.AmenityController
 }
 
 func (c RouteConfig) Setup() {
@@ -35,6 +36,7 @@ func (c RouteConfig) Setup() {
 	c.SetupBooking()
 	c.SetupAvailability()
 	c.SetupPayment()
+	c.SetupAmenity()
 }
 
 func (c RouteConfig) SetupAuth() {
@@ -110,4 +112,13 @@ func (c RouteConfig) SetupPayment() {
 	booking.Post("/:id/pay", c.PaymentController.CreatePayment)
 
 	c.App.Post("/api/payment/notify", c.PaymentController.HandleNotification)
+}
+
+func (c RouteConfig) SetupAmenity() {
+	amenity := c.App.Group("/api/amenities")
+	amenity.Get("/", c.AmenityController.List)
+	amenity.Post("/", c.AmenityController.Create)
+
+	c.App.Put("/api/properties/:id/amenities", c.AmenityController.SetPropertyAmenities)
+	c.App.Put("/api/rentables/:id/amenities", c.AmenityController.SetRentableAmenities)
 }

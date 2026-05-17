@@ -37,6 +37,7 @@ func Bootstrap(cfg *BootstrapConfig) {
 	bookingRepo := repository.NewBookingRepo(cfg.Log)
 	availabilityRepo := repository.NewAvailabilityRepo(cfg.Log)
 	paymentRepo := repository.NewPaymentRepo(cfg.Log)
+	amenityRepo := repository.NewAmenityRepo(cfg.Log)
 
 	// Use Case Config
 	healthUseCase := usecase.NewHealthUseCase(cfg.Config)
@@ -47,6 +48,8 @@ func Bootstrap(cfg *BootstrapConfig) {
 	rentableUseCase := usecase.NewRentableUseCase(cfg.DB, cfg.Log, cfg.Validate, rentableRepo, propertyRepo)
 	availabilityUseCase := usecase.NewAvailabilityUseCase(cfg.DB, cfg.Log, cfg.Validate, availabilityRepo, rentableRepo)
 	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo)
+
+	amenityUseCase := usecase.NewAmenityUseCase(cfg.DB, cfg.Log, cfg.Validate, amenityRepo, propertyRepo, rentableRepo)
 
 	dokuClient := pkg.NewDokuClient(cfg.Config)
 	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient)
@@ -61,6 +64,7 @@ func Bootstrap(cfg *BootstrapConfig) {
 	bookingController := http.NewBookingController(cfg.Log, bookingUseCase)
 	availabilityController := http.NewAvailabilityController(cfg.Log, availabilityUseCase)
 	paymentController := http.NewPaymentController(cfg.Log, paymentUseCase, dokuClient)
+	amenityController := http.NewAmenityController(cfg.Log, amenityUseCase)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(authUseCase)
@@ -79,5 +83,6 @@ func Bootstrap(cfg *BootstrapConfig) {
 		BookingController:      bookingController,
 		AvailabilityController: availabilityController,
 		PaymentController:      paymentController,
+		AmenityController:      amenityController,
 	}.Setup()
 }

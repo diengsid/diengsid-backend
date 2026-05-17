@@ -14,17 +14,18 @@ type RentableCreateRequest struct {
 }
 
 type RentableResponse struct {
-	ID         string  `json:"id"`
-	PropertyID string  `json:"property_id"`
-	Type       string  `json:"type"`
-	Name       string  `json:"name"`
-	ImageUrl   string  `json:"image_url"`
-	Capacity   int     `json:"capacity"`
-	BasePrice  float64 `json:"base_price"`
-	Discount   float64 `json:"discount"`
-	Stock      int     `json:"stock"`
-	CreatedAt  int64   `json:"created_at"`
-	UpdatedAt  int64   `json:"updated_at"`
+	ID         string            `json:"id"`
+	PropertyID string            `json:"property_id"`
+	Type       string            `json:"type"`
+	Name       string            `json:"name"`
+	ImageUrl   string            `json:"image_url"`
+	Capacity   int               `json:"capacity"`
+	BasePrice  float64           `json:"base_price"`
+	Discount   float64           `json:"discount"`
+	Stock      int               `json:"stock"`
+	CreatedAt  int64             `json:"created_at"`
+	UpdatedAt  int64             `json:"updated_at"`
+	Amenities  []AmenityResponse `json:"amenities,omitempty"`
 }
 
 func RentableToResponse(rentable *entity.Rentable) *RentableResponse {
@@ -44,6 +45,7 @@ func RentableToResponse(rentable *entity.Rentable) *RentableResponse {
 		Stock:      rentable.Stock,
 		CreatedAt:  rentable.CreatedAt,
 		UpdatedAt:  rentable.UpdatedAt,
+		Amenities:  AmenitiesToResponse(rentable.Amenities),
 	}
 }
 

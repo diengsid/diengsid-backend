@@ -124,7 +124,7 @@ func (u *PropertyUseCase) GetByID(ctx context.Context, id string) (*model.Proper
 	defer tx.Rollback()
 
 	property := new(entity.Property)
-	err := u.ProperyRepo.FindByExperienceID(tx, property, id, "Host", "Experience", "Experience.Images", "Rentable")
+	err := u.ProperyRepo.FindByExperienceID(tx, property, id, "Host", "Experience", "Experience.Images", "Rentable", "Rentable.Amenities", "Amenities")
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			u.Log.WithError(err).Error("PROPERTY NOT FOUND.")

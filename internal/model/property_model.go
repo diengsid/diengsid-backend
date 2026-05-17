@@ -13,6 +13,7 @@ type PropertyResponse struct {
 	Experience   ExperienceResponse  `json:"experience,omitempty"`
 	Host         HostProfileResponse `json:"host,omitempty"`
 	Rentable     []RentableResponse  `json:"rentable,omitempty"`
+	Amenities    []AmenityResponse   `json:"amenities,omitempty"`
 }
 
 type PropertyCreateRequest struct {
@@ -45,5 +46,6 @@ func PropertyToResponse(property *entity.Property) *PropertyResponse {
 		CreatedAt:    property.CreatedAt,
 		UpdatedAt:    property.UpdatedAt,
 		Rentable:     rentable,
+		Amenities:    AmenitiesToResponse(property.Amenities),
 	}
 }
