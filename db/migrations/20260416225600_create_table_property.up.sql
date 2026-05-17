@@ -1,5 +1,7 @@
 CREATE TABLE host_profiles (
     id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255),
     phone_number VARCHAR(255),
     profile_picture_url VARCHAR(255),
     address VARCHAR(255),
@@ -41,8 +43,10 @@ CREATE TABLE rentables (
     property_id VARCHAR(36) NOT NULL,
     type VARCHAR(20), -- 🔥 kunci utama : (room, unit)
     name VARCHAR(255), -- Deluxe Room / Villa A
+    image_url VARCHAR(255),
     capacity INT,
     base_price DOUBLE PRECISION NOT NULL,
+    discount FLOAT,
     stock INT NOT NULL DEFAULT 1, -- 🔥 pembeda utama
     created_at BIGINT,
     updated_at BIGINT,

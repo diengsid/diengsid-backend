@@ -11,16 +11,20 @@ import (
 
 func NewFiber(cfg *viper.Viper) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:      cfg.GetString("app.name"),
-		Prefork:      cfg.GetBool("app.prefork"),
-		ErrorHandler: NewErrorHandler(),
+		AppName:                 cfg.GetString("app.name"),
+		Prefork:                 cfg.GetBool("app.prefork"),
+		ErrorHandler:            NewErrorHandler(),
+		EnableTrustedProxyCheck: false,
 	})
 
+	app.Static("/uploads", "./uploads")
 	app.Use(recover.New())
+
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "*",
-		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowOrigins:     cfg.GetString("app.cors_origins"),
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowCredentials: true,
 	}))
 
 	return app

@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:9000
+@rentableId = 7bebd3a2-3c01-44c0-a353-5e17e4ec92c4
+
+### Check availability (no bookings)
+GET {{baseUrl}}/api/rentables/{{rentableId}}/availability?check_in=2026-06-01&check_out=2026-06-30
+
+### Check availability — invalid date range (check_out before check_in)
+GET {{baseUrl}}/api/rentables/{{rentableId}}/availability?check_in=2026-07-10&check_out=2026-07-05
+
+### Check availability — missing check_in
+GET {{baseUrl}}/api/rentables/{{rentableId}}/availability?check_out=2026-07-04
+
+### Check availability — rentable not found
+GET {{baseUrl}}/api/rentables/rentable-tidak-ada/availability?check_in=2026-07-01&check_out=2026-07-04

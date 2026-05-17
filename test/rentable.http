@@ -1,0 +1,74 @@
+@baseUrl = http://localhost:9000
+
+### ─── Create Rentable ─────────────────────────────────────────────────────────
+
+# Sukses — kamar standar dengan diskon
+POST {{baseUrl}}/api/rentables
+Content-Type: application/json
+
+{
+  "property_id": "your_property_id_here",
+  "type": "room",
+  "name": "Kamar Standar",
+  "image_url": "https://example.com/images/kamar-standar.jpg",
+  "capacity": 2,
+  "base_price": 250000,
+  "discount": 10,
+  "stock": 5
+}
+
+###
+
+# Sukses — unit (villa) tanpa diskon; stock harus 1 untuk type unit
+POST {{baseUrl}}/api/rentables
+Content-Type: application/json
+
+{
+  "property_id": "your_property_id_here",
+  "type": "unit",
+  "name": "Vila Utama",
+  "image_url": "https://example.com/images/vila-utama.jpg",
+  "capacity": 6,
+  "base_price": 1500000,
+  "discount": 0,
+  "stock": 1
+}
+
+###
+
+# Sukses — minimal (tanpa type, name, image, capacity, discount)
+POST {{baseUrl}}/api/rentables
+Content-Type: application/json
+
+{
+  "property_id": "your_property_id_here",
+  "base_price": 200000
+}
+
+###
+
+# Error: property_id tidak ada di database (404 Not Found)
+POST {{baseUrl}}/api/rentables
+Content-Type: application/json
+
+{
+  "property_id": "property-id-tidak-ada",
+  "type": "room",
+  "name": "Kamar Standar",
+  "base_price": 250000,
+  "stock": 3
+}
+
+###
+
+# Error: type unit dengan stock > 1 (400 Bad Request)
+POST {{baseUrl}}/api/rentables
+Content-Type: application/json
+
+{
+  "property_id": "your_property_id_here",
+  "type": "unit",
+  "name": "Vila Utama",
+  "base_price": 1500000,
+  "stock": 2
+}

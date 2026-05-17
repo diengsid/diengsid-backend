@@ -1,0 +1,127 @@
+@baseUrl = http://localhost:9000
+@token=AK3sk-yQ5pfKYqPCViqR5rk6Z8u_pBMwKiWdxooKJgQ
+
+### ─── Register ──────────────────────────────────────────────────────────────
+
+# Sukses
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ahmad Rifai",
+  "email": "ahmad@example.com",
+  "password": "password123"
+}
+
+###
+
+# Error: password kurang dari 8 karakter (400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ahmad Rifai",
+  "email": "ahmad@example.com",
+  "password": "short"
+}
+
+###
+
+# Error: email tidak valid (400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ahmad Rifai",
+  "email": "bukan-email",
+  "password": "password123"
+}
+
+###
+
+# Error: name kosong (400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "ahmad@example.com",
+  "password": "password123"
+}
+
+###
+
+# Error: email sudah terdaftar (409)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "User Lain",
+  "email": "ahmad@example.com",
+  "password": "password456"
+}
+
+### ─── Login ───────────────────────────────────────────────────────────────────
+
+# Sukses — cookie token di-set otomatis
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ahmad@example.com",
+  "password": "password123"
+}
+
+###
+
+# Error: password salah (401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ahmad@example.com",
+  "password": "wrongpassword"
+}
+
+###
+
+# Error: email tidak terdaftar (401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "tidakada@example.com",
+  "password": "password123"
+}
+
+###
+
+# Error: email format salah (400)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bukan-email",
+  "password": "password123"
+}
+
+### ─── Get Current User ────────────────────────────────────────────────────────
+
+# Sukses — cookie dikirim otomatis oleh browser/client
+GET {{baseUrl}}/api/auth/_current
+Cookie: token={{token}}
+
+###
+
+# Error: tanpa cookie (401)
+GET {{baseUrl}}/api/auth/_current
+
+### ─── Logout ──────────────────────────────────────────────────────────────────
+
+# Sukses — cookie di-clear setelah logout
+DELETE {{baseUrl}}/api/auth/_logout
+Cookie: token={{token}}
+
+###
+
+# Error: tanpa cookie (401)
+DELETE {{baseUrl}}/api/auth/_logout

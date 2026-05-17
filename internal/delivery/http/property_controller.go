@@ -50,7 +50,7 @@ func (c *PropertyController) GetByID(ctx *fiber.Ctx) error {
 	response, err := c.PropertyUseCase.GetByID(ctx.UserContext(), id)
 	if err != nil {
 		c.Log.WithError(err).Error("failed to get property by id")
-		return fiber.ErrInternalServerError
+		return err
 	}
 
 	return ctx.JSON(model.WebResponse[model.PropertyResponse]{

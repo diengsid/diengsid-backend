@@ -216,7 +216,7 @@ func (u *AuthUseCase) AuthGoogle(ctx context.Context, request *model.AuthGoogleR
 		Token:     token,
 		IPAddress: &request.IP,
 		UserAgent: &request.UserAgent,
-		ExpiredAt: time.Now().Add(24 * time.Hour).UnixMilli(),
+		ExpiredAt: time.Now().Add(1000 * time.Hour).UnixMilli(),
 	}
 
 	if err := u.SessionRepo.Create(tx, session); err != nil {
@@ -292,4 +292,120 @@ func (c *AuthUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 	}
 
 	return model.UserToResponse(user), nil
+}
+
+func (u *AuthUseCase) Register(ctx context.Context, req *model.RegisterRequest) (*model.AuthResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := u.Validate.Struct(req); err != nil {
+		u.Log.WithError(err).Error("FAILED TO VALIDATE REGISTER REQUEST.")
+		return nil, fiber.ErrBadRequest
+	}
+
+	existing := new(entity.User)
+	err := u.UserRepo.FindByEmail(tx, existing, req.Email)
+	if err == nil {
+		return nil, fiber.NewError(fiber.StatusConflict, "email already registered")
+	}
+	if err != gorm.ErrRecordNotFound {
+		u.Log.WithError(err).Error("FAILED TO CHECK EMAIL.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		u.Log.WithError(err).Error("FAILED TO HASH PASSWORD.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	user := &entity.User{
+		Name:          req.Name,
+		Email:         req.Email,
+		Password:      string(hashed),
+		EmailVerified: false,
+		Role:          "USER",
+	}
+
+	if err := u.UserRepo.Create(tx, user); err != nil {
+		u.Log.WithError(err).Error("FAILED TO CREATE USER.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	token, err := lib.GenerateToken(32)
+	if err != nil {
+		u.Log.WithError(err).Error("FAILED TO GENERATE TOKEN.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	session := &entity.Session{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiredAt: time.Now().Add(1000 * time.Hour).UnixMilli(),
+	}
+
+	if err := u.SessionRepo.Create(tx, session); err != nil {
+		u.Log.WithError(err).Error("FAILED TO CREATE SESSION.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.WithError(err).Error("FAILED TO COMMIT TRANSACTION.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return &model.AuthResponse{
+		User:  *model.UserToResponse(user),
+		Token: token,
+	}, nil
+}
+
+func (u *AuthUseCase) Login(ctx context.Context, req *model.LoginRequest) (*model.AuthResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := u.Validate.Struct(req); err != nil {
+		u.Log.WithError(err).Error("FAILED TO VALIDATE LOGIN REQUEST.")
+		return nil, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := u.UserRepo.FindByEmail(tx, user, req.Email); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fiber.ErrUnauthorized
+		}
+		u.Log.WithError(err).Error("FAILED TO FIND USER.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, fiber.ErrUnauthorized
+	}
+
+	token, err := lib.GenerateToken(32)
+	if err != nil {
+		u.Log.WithError(err).Error("FAILED TO GENERATE TOKEN.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	session := &entity.Session{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiredAt: time.Now().Add(24 * time.Hour).UnixMilli(),
+	}
+
+	if err := u.SessionRepo.Create(tx, session); err != nil {
+		u.Log.WithError(err).Error("FAILED TO CREATE SESSION.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.WithError(err).Error("FAILED TO COMMIT TRANSACTION.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return &model.AuthResponse{
+		User:  *model.UserToResponse(user),
+		Token: token,
+	}, nil
 }

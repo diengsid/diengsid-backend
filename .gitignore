@@ -1,2 +1,4 @@
 .DS_Store
 config/config.yml
+/uploads
+/test/uploads

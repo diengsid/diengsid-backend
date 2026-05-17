@@ -1,24 +1,131 @@
-POST http://localhost:8088/api/experiences/
+@baseUrl = http://localhost:9000
+
+### ─── Create Experience ───────────────────────────────────────────────────────
+
+# Sukses — dengan gambar dan koordinat
+POST {{baseUrl}}/api/experiences
 Content-Type: application/json
-Authorization: Bearer your_admin_token_here
 
 {
-  "experience_type": "tour",
-  "title": "Paket Sunrise Dieng",
-  "address": "Dieng Kulon, Batur, Banjarnegara, Jawa Tengah",
-  "description": "Paket wisata sunrise dengan guide lokal, spot foto, dan dokumentasi sederhana.",
-  "thumbnail_url": "https://example.com/images/experiences/dieng-sunrise-thumb.jpg",
-  "lat": -7.2092,
-  "lng": 109.9068,
+  "experience_type": "nature",
+  "title": "Sunrise di Puncak Sikunir",
+  "address": "Sikunir, Kejajar, Wonosobo, Jawa Tengah",
+  "description": "Nikmati keindahan matahari terbit dari puncak Sikunir dengan pemandangan Dataran Tinggi Dieng yang menakjubkan.",
+  "thumbnail_url": "https://example.com/images/sikunir.jpg",
+  "lat": -7.2132,
+  "lng": 109.9199,
   "base_price": 150000,
   "images": [
-    {
-      "image_url": "https://example.com/images/experiences/dieng-sunrise-1.jpg",
-      "is_primary": true
-    },
-    {
-      "image_url": "https://example.com/images/experiences/dieng-sunrise-2.jpg",
-      "is_primary": false
-    }
+    { "image_url": "https://example.com/images/sikunir-1.jpg", "is_primary": true },
+    { "image_url": "https://example.com/images/sikunir-2.jpg", "is_primary": false }
   ]
 }
+
+###
+
+# Sukses — minimal (tanpa gambar, thumbnail, dan koordinat)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "experience_type": "culinary",
+  "title": "Tour Kuliner Dieng",
+  "address": "Pasar Dieng, Banjarnegara",
+  "description": "Jelajahi kuliner khas Dieng mulai dari carica, kentang goreng, hingga mie ongklok.",
+  "base_price": 75000
+}
+
+###
+
+# Error: experience_type kosong (400 Bad Request)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "title": "Telaga Warna",
+  "address": "Dieng, Banjarnegara",
+  "description": "Danau warna-warni di kawasan Dieng.",
+  "base_price": 50000
+}
+
+###
+
+# Error: title kosong (400 Bad Request)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "experience_type": "nature",
+  "address": "Dieng, Banjarnegara",
+  "description": "Danau warna-warni di kawasan Dieng.",
+  "base_price": 50000
+}
+
+###
+
+# Error: address kosong (400 Bad Request)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "experience_type": "nature",
+  "title": "Telaga Warna",
+  "description": "Danau warna-warni di kawasan Dieng.",
+  "base_price": 50000
+}
+
+###
+
+# Error: description kosong (400 Bad Request)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "experience_type": "nature",
+  "title": "Telaga Warna",
+  "address": "Dieng, Banjarnegara",
+  "base_price": 50000
+}
+
+###
+
+# Error: base_price tidak diisi (400 Bad Request)
+POST {{baseUrl}}/api/experiences
+Content-Type: application/json
+
+{
+  "experience_type": "nature",
+  "title": "Telaga Warna",
+  "address": "Dieng, Banjarnegara",
+  "description": "Danau warna-warni di kawasan Dieng."
+}
+
+### ─── Search Experience ───────────────────────────────────────────────────────
+
+# Semua experience (default page=1, size=10)
+GET {{baseUrl}}/api/experiences
+
+###
+
+# Filter by keyword
+GET {{baseUrl}}/api/experiences?key=sikunir
+
+###
+
+# Filter by type
+GET {{baseUrl}}/api/experiences?type=nature
+
+###
+
+# Filter keyword + type
+GET {{baseUrl}}/api/experiences?key=dieng&type=culinary
+
+###
+
+# Custom pagination
+GET {{baseUrl}}/api/experiences?page=1&size=5
+
+###
+
+# Page jauh melebihi total data (hasil data kosong)
+GET {{baseUrl}}/api/experiences?page=999&size=10

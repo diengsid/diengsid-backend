@@ -1,6 +1,11 @@
 app:
+  env: development
   name: "Diengs ID API"
   prefork: false
+  url: http://localhost:9000
+  cors_origins: http://localhost:3000
+  cookie_secure: false
+  cookie_domain:
 
 web:
   port: 9000
@@ -29,3 +34,11 @@ mail:
 
 googe:
   clientId: 314501383101-t83bulhqb5ugib4s57t5hepheqt2rdgo.apps.googleusercontent.com
+
+doku:
+  client_id: "BRN-0222-1773906551013"
+  secret_key: "SK-uTjSNjeQAzchNhy54WyP"
+  is_sandbox: true
+  success_url: "http://localhost:3000/payment/result?status=success"
+  failed_url: "http://localhost:3000/payment/result?status=failed"
+  notification_url: "https://e543-182-8-211-227.ngrok-free.app/api/payment/notify"

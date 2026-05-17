@@ -4,6 +4,8 @@ import "id.diengs.backend/internal/entity"
 
 type HostProfileResponse struct {
 	ID                string `json:"id"`
+	Name              string `json:"name"`
+	Email             string `json:"email"`
 	PhoneNumber       string `json:"phone_number"`
 	ProfilePictureURL string `json:"profile_picture_url"`
 	Address           string `json:"address"`
@@ -16,7 +18,9 @@ type HostProfileResponse struct {
 }
 
 type HostCreateRequest struct {
-	PhoneNumber       string `json:"phone_number"`
+	Name              string `json:"name" validate:"required"`
+	Email             string `json:"email" validate:"required"`
+	PhoneNumber       string `json:"phone_number" validate:"required"`
 	ProfilePictureURL string `json:"profile_picture_url"`
 	Address           string `json:"address"`
 	BankAccountName   string `json:"bank_account_name"`
@@ -28,6 +32,8 @@ type HostCreateRequest struct {
 func HostToResponse(host *entity.HostProfile) *HostProfileResponse {
 	return &HostProfileResponse{
 		ID:                host.ID,
+		Name:              host.Name,
+		Email:             host.Email,
 		PhoneNumber:       host.PhoneNumber,
 		ProfilePictureURL: host.ProfilePictureURL,
 		Address:           host.Address,

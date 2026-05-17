@@ -1,0 +1,349 @@
+@baseUrl    = http://localhost:9000
+@token      = your_guest_token_here
+@hostToken  = your_host_token_here
+@adminToken = your_admin_token_here
+@bookingId  = your_booking_id_here
+@rentableId = your_rentable_id_here
+@propertyId = your_property_id_here
+
+### ══════════════════════════════════════════════════════════════════════════
+### GUEST — Booking
+### ══════════════════════════════════════════════════════════════════════════
+
+### ─── Create Booking ─────────────────────────────────────────────────────────
+
+# Sukses — 2 kamar, 3 malam, bayar penuh
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "rentable_id": "{{rentableId}}",
+  "property_id": "{{propertyId}}",
+  "check_in": "2026-06-01",
+  "check_out": "2026-06-04",
+  "quantity": 2,
+  "guest_count": 4,
+  "first_payment": "FULL"
+}
+
+###
+
+# Sukses — 1 kamar, 2 malam, uang muka (DP)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "rentable_id": "{{rentableId}}",
+  "property_id": "{{propertyId}}",
+  "check_in": "2026-07-10",
+  "check_out": "2026-07-12",
+  "quantity": 1,
+  "guest_count": 2,
+  "first_payment": "DP"
+}
+
+###
+
+# Error: rentable_id kosong (400 Bad Request)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "property_id": "{{propertyId}}",
+  "check_in": "2026-06-01",
+  "check_out": "2026-06-04",
+  "quantity": 1,
+  "guest_count": 1
+}
+
+###
+
+# Error: check_out sebelum check_in (400 Bad Request)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "rentable_id": "{{rentableId}}",
+  "property_id": "{{propertyId}}",
+  "check_in": "2026-06-10",
+  "check_out": "2026-06-05",
+  "quantity": 1,
+  "guest_count": 1
+}
+
+###
+
+# Error: format tanggal salah (400 Bad Request)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "rentable_id": "{{rentableId}}",
+  "property_id": "{{propertyId}}",
+  "check_in": "01-06-2026",
+  "check_out": "04-06-2026",
+  "quantity": 1,
+  "guest_count": 1
+}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+
+{
+  "rentable_id": "{{rentableId}}",
+  "property_id": "{{propertyId}}",
+  "check_in": "2026-06-01",
+  "check_out": "2026-06-04",
+  "quantity": 1,
+  "guest_count": 1
+}
+
+### ─── Get My Bookings ────────────────────────────────────────────────────────
+
+# Sukses — riwayat booking current user
+GET {{baseUrl}}/api/bookings/my
+Cookie: token={{token}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+GET {{baseUrl}}/api/bookings/my
+
+### ─── Get Booking by ID ──────────────────────────────────────────────────────
+
+# Sukses
+GET {{baseUrl}}/api/bookings/{{bookingId}}
+Cookie: token={{token}}
+
+###
+
+# Error: bukan pemilik booking (403 Forbidden)
+GET {{baseUrl}}/api/bookings/{{bookingId}}
+Cookie: token={{hostToken}}
+
+###
+
+# Error: booking tidak ditemukan (404 Not Found)
+GET {{baseUrl}}/api/bookings/booking-tidak-ada
+Cookie: token={{token}}
+
+### ─── Mark Booking DONE (REVIEW → DONE) ─────────────────────────────────────
+
+# Sukses — user menyelesaikan booking setelah masa review
+PATCH {{baseUrl}}/api/bookings/{{bookingId}}/done
+Cookie: token={{token}}
+
+###
+
+# Error: status bukan REVIEW (400 Bad Request)
+PATCH {{baseUrl}}/api/bookings/{{bookingId}}/done
+Cookie: token={{token}}
+
+###
+
+# Error: bukan pemilik booking (403 Forbidden)
+PATCH {{baseUrl}}/api/bookings/{{bookingId}}/done
+Cookie: token={{hostToken}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+PATCH {{baseUrl}}/api/bookings/{{bookingId}}/done
+
+
+### ══════════════════════════════════════════════════════════════════════════
+### HOST — Manajemen Booking Properti Sendiri
+### ══════════════════════════════════════════════════════════════════════════
+
+### ─── Get Host Bookings ──────────────────────────────────────────────────────
+
+# Sukses — semua booking untuk properti milik host
+GET {{baseUrl}}/api/host/bookings
+Cookie: token={{hostToken}}
+
+###
+
+# Error: email tidak terdaftar di host_profiles (404)
+GET {{baseUrl}}/api/host/bookings
+Cookie: token={{token}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+GET {{baseUrl}}/api/host/bookings
+
+### ─── Confirm Booking — Setujui Ketersediaan (PENDING → WAITING_PAYMENT) ────
+
+# Sukses — kamar tersedia, minta guest bayar
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{hostToken}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+###
+
+# Sukses — kamar tidak tersedia, tolak booking
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{hostToken}}
+
+{
+  "status": "UNAVAILABLE"
+}
+
+###
+
+# Error: status tidak valid (400 Bad Request)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{hostToken}}
+
+{
+  "status": "CHECK_IN"
+}
+
+###
+
+# Error: booking bukan dalam status PENDING (400 Bad Request)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{hostToken}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+###
+
+# Error: bukan pemilik properti (403 Forbidden)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+###
+
+# Error: booking tidak ditemukan (404 Not Found)
+PATCH {{baseUrl}}/api/host/bookings/booking-tidak-ada/confirm
+Content-Type: application/json
+Cookie: token={{hostToken}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+### ─── Checkout — Tamu Check Out (CHECK_IN → REVIEW) ────────────────────────
+
+# Sukses — host menandai tamu sudah keluar, masuk masa review
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/checkout
+Cookie: token={{hostToken}}
+
+###
+
+# Error: status bukan CHECK_IN (400 Bad Request)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/checkout
+Cookie: token={{hostToken}}
+
+###
+
+# Error: bukan pemilik properti (403 Forbidden)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/checkout
+Cookie: token={{token}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+PATCH {{baseUrl}}/api/host/bookings/{{bookingId}}/checkout
+
+
+### ══════════════════════════════════════════════════════════════════════════
+### ADMIN — Semua Booking (Tanpa Cek Kepemilikan)
+### ══════════════════════════════════════════════════════════════════════════
+
+### ─── Get All Bookings ───────────────────────────────────────────────────────
+
+# Sukses — admin melihat seluruh booking
+GET {{baseUrl}}/api/admin/bookings
+Cookie: token={{adminToken}}
+
+###
+
+# Error: bukan admin (403 Forbidden)
+GET {{baseUrl}}/api/admin/bookings
+Cookie: token={{token}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+GET {{baseUrl}}/api/admin/bookings
+
+### ─── Admin Confirm Booking ──────────────────────────────────────────────────
+
+# Sukses — admin menyetujui booking siapapun
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{adminToken}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+###
+
+# Sukses — admin menolak booking
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{adminToken}}
+
+{
+  "status": "UNAVAILABLE"
+}
+
+###
+
+# Error: bukan admin (403 Forbidden)
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/confirm
+Content-Type: application/json
+Cookie: token={{token}}
+
+{
+  "status": "WAITING_PAYMENT"
+}
+
+### ─── Admin Checkout (CHECK_IN → REVIEW) ────────────────────────────────────
+
+# Sukses
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/checkout
+Cookie: token={{adminToken}}
+
+###
+
+# Error: bukan admin (403 Forbidden)
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/checkout
+Cookie: token={{token}}
+
+### ─── Admin Complete (REVIEW → DONE) ───────────────────────────────────────
+
+# Sukses
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/done
+Cookie: token={{adminToken}}
+
+###
+
+# Error: bukan admin (403 Forbidden)
+PATCH {{baseUrl}}/api/admin/bookings/{{bookingId}}/done
+Cookie: token={{token}}

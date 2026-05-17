@@ -74,6 +74,8 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 	if hostProfile.ID == "" {
 		// Logika untuk membuat host baru
 		host := &entity.HostProfile{
+			Name:              req.Host.Name,
+			Email:             req.Host.Email,
 			PhoneNumber:       req.Host.PhoneNumber,
 			ProfilePictureURL: req.Host.ProfilePictureURL,
 			Address:           req.Host.Address,
@@ -122,7 +124,7 @@ func (u *PropertyUseCase) GetByID(ctx context.Context, id string) (*model.Proper
 	defer tx.Rollback()
 
 	property := new(entity.Property)
-	err := u.ProperyRepo.FindById(tx, property, id, "Host", "Experience", "Experience.Images")
+	err := u.ProperyRepo.FindByExperienceID(tx, property, id, "Host", "Experience", "Experience.Images", "Rentable")
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			u.Log.WithError(err).Error("PROPERTY NOT FOUND.")

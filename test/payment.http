@@ -1,0 +1,132 @@
+@baseUrl   = http://localhost:9000
+@token     = your_guest_token_here
+@bookingId = your_booking_id_here
+@invoiceNo = INV-your_booking_id_here
+
+### ══════════════════════════════════════════════════════════════════════════
+### GUEST — Buat Link Pembayaran
+### ══════════════════════════════════════════════════════════════════════════
+
+### ─── Create Payment Link (WAITING_PAYMENT) ─────────────────────────────────
+
+# Sukses — booking dalam status WAITING_PAYMENT, kembalikan payment_url DOKU
+POST {{baseUrl}}/api/bookings/{{bookingId}}/pay
+Cookie: token={{token}}
+
+###
+
+# Error: booking bukan dalam status WAITING_PAYMENT (400 Bad Request)
+POST {{baseUrl}}/api/bookings/{{bookingId}}/pay
+Cookie: token={{token}}
+
+###
+
+# Error: bukan pemilik booking (403 Forbidden)
+POST {{baseUrl}}/api/bookings/{{bookingId}}/pay
+Cookie: token=token_user_lain
+
+###
+
+# Error: booking tidak ditemukan (404 Not Found)
+POST {{baseUrl}}/api/bookings/booking-tidak-ada/pay
+Cookie: token={{token}}
+
+###
+
+# Error: tidak login (401 Unauthorized)
+POST {{baseUrl}}/api/bookings/{{bookingId}}/pay
+
+
+### ══════════════════════════════════════════════════════════════════════════
+### DOKU — Webhook Notifikasi Pembayaran
+### (Biasanya dipanggil oleh server DOKU, bukan manual)
+### ══════════════════════════════════════════════════════════════════════════
+
+### ─── Notifikasi Pembayaran SUCCESS ─────────────────────────────────────────
+
+# Signature dihitung oleh DOKU server. Contoh di bawah hanya ilustrasi —
+# jalankan via DOKU sandbox dashboard atau dengan client_id & secret_key asli.
+POST {{baseUrl}}/api/payment/notify
+Content-Type: application/json
+Client-Id: your_doku_client_id
+Request-Id: test-request-id-001
+Request-Timestamp: 2026-05-17T10:00:00Z
+Signature: HMACSHA256=your_computed_signature_here
+
+{
+  "order": {
+    "invoice_number": "{{invoiceNo}}",
+    "amount": 540000
+  },
+  "transaction": {
+    "status": "SUCCESS",
+    "date": "2026-05-17T10:00:00Z",
+    "original_request_id": "test-request-id-001"
+  }
+}
+
+###
+
+# Notifikasi Pembayaran FAILED
+POST {{baseUrl}}/api/payment/notify
+Content-Type: application/json
+Client-Id: your_doku_client_id
+Request-Id: test-request-id-002
+Request-Timestamp: 2026-05-17T10:05:00Z
+Signature: HMACSHA256=your_computed_signature_here
+
+{
+  "order": {
+    "invoice_number": "{{invoiceNo}}",
+    "amount": 540000
+  },
+  "transaction": {
+    "status": "FAILED",
+    "date": "2026-05-17T10:05:00Z",
+    "original_request_id": "test-request-id-002"
+  }
+}
+
+###
+
+# Notifikasi Pembayaran EXPIRED
+POST {{baseUrl}}/api/payment/notify
+Content-Type: application/json
+Client-Id: your_doku_client_id
+Request-Id: test-request-id-003
+Request-Timestamp: 2026-05-17T11:00:00Z
+Signature: HMACSHA256=your_computed_signature_here
+
+{
+  "order": {
+    "invoice_number": "{{invoiceNo}}",
+    "amount": 540000
+  },
+  "transaction": {
+    "status": "EXPIRED",
+    "date": "2026-05-17T11:00:00Z",
+    "original_request_id": "test-request-id-003"
+  }
+}
+
+###
+
+# Error: Signature tidak valid (401 Unauthorized)
+POST {{baseUrl}}/api/payment/notify
+Content-Type: application/json
+Client-Id: your_doku_client_id
+Request-Id: test-request-id-bad
+Request-Timestamp: 2026-05-17T10:00:00Z
+Signature: HMACSHA256=signature_salah
+
+{
+  "order": {
+    "invoice_number": "{{invoiceNo}}",
+    "amount": 540000
+  },
+  "transaction": {
+    "status": "SUCCESS",
+    "date": "2026-05-17T10:00:00Z",
+    "original_request_id": "test-request-id-bad"
+  }
+}

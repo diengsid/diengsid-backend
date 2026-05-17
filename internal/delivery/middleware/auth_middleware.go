@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"strings"
-
 	"github.com/gofiber/fiber/v2"
 	"id.diengs.backend/internal/model"
 	"id.diengs.backend/internal/usecase"
@@ -10,31 +8,18 @@ import (
 
 func NewAuth(userUseCase *usecase.AuthUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		// Ambil header Authorization
-		authHeader := ctx.Get("Authorization")
-		if authHeader == "" {
-			return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized: Missing Authorization header")
+		token := ctx.Cookies("token")
+		if token == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
 		}
 
-		// Harus format: Bearer <token>
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return fiber.NewError(fiber.StatusUnauthorized, "Invalid token format")
-		}
-
-		token := parts[1]
-		request := &model.VerifyUserRequest{Token: token}
-		userUseCase.Log.Debugf("Authorization : %s", request.Token)
-
-		user, err := userUseCase.Verify(ctx.UserContext(), request)
+		user, err := userUseCase.Verify(ctx.UserContext(), &model.VerifyUserRequest{Token: token})
 		if err != nil {
 			userUseCase.Log.Warnf("Failed find user by token : %+v", err)
 			return err
 		}
 
-		// Simpan user ke context agar bisa diakses di handler
 		ctx.Locals("user", user)
-
 		return ctx.Next()
 	}
 }

@@ -1,19 +1,98 @@
-## Experience Creation with Host Data
-POST http://localhost:9000/api/properties
+@baseUrl = http://localhost:9000
+
+### ─── Create Property ────────────────────────────────────────────────────────
+
+# Sukses — buat host baru sekaligus (inline host)
+POST {{baseUrl}}/api/properties
 Content-Type: application/json
-Authorization: Bearer your_admin_token_here
 
 {
-  "experience_id": 1,
+  "experience_id": "your_experience_id_here",
   "host": {
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "phone": "+1234567890",
-    "profile_picture_url": "https://example.com/images/hosts/john-doe.jpg",
-    "bio": "Experienced local guide with a passion for sharing the beauty of Dieng.",
+    "name": "Budi Santoso",
+    "email": "budi@example.com",
+    "phone_number": "08123456789",
+    "profile_picture_url": "https://example.com/images/budi.jpg",
+    "address": "Jl. Dieng No. 1, Wonosobo",
+    "bank_account_name": "Budi Santoso",
+    "bank_account_number": "1234567890",
+    "ktp_number": "3307010101800001",
+    "bio": "Host lokal berpengalaman di kawasan Dieng."
   },
-  "property_type": "hotel",
+  "property_type": "homestay",
   "booking_type": "room"
 }
 
+###
 
+# Sukses — gunakan host yang sudah ada (via host_id)
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "experience_id": "your_experience_id_here",
+  "host_id": "your_host_id_here",
+  "property_type": "villa",
+  "booking_type": "unit"
+}
+
+###
+
+# Sukses — tanpa property_type dan booking_type (gunakan default)
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "experience_id": "your_experience_id_here",
+  "host_id": "your_host_id_here"
+}
+
+###
+
+# Error: experience_id kosong (400 Bad Request)
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "host_id": "your_host_id_here",
+  "property_type": "homestay",
+  "booking_type": "room"
+}
+
+###
+
+# Error: host tidak diberikan sama sekali — tidak ada host_id maupun host object
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "experience_id": "your_experience_id_here",
+  "property_type": "homestay",
+  "booking_type": "room"
+}
+
+###
+
+# Error: inline host tanpa name (400 Bad Request)
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "experience_id": "your_experience_id_here",
+  "host": {
+    "email": "budi@example.com",
+    "phone_number": "08123456789"
+  },
+  "property_type": "homestay",
+  "booking_type": "room"
+}
+
+### ─── Get Property by Experience ID ─────────────────────────────────────────
+
+# Sukses (gunakan experience_id, bukan property_id)
+GET {{baseUrl}}/api/properties/your_experience_id_here
+
+###
+
+# Error: tidak ditemukan (404 Not Found)
+GET {{baseUrl}}/api/properties/experience-id-tidak-ada

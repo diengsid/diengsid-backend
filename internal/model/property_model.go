@@ -6,12 +6,13 @@ import (
 
 type PropertyResponse struct {
 	ID           string              `json:"id"`
-	Experience   ExperienceResponse  `json:"experience,omitempty"`
-	Host         HostProfileResponse `json:"host,omitempty"`
 	PropertyType string              `json:"property_type"`
 	BookingType  string              `json:"booking_type"`
 	CreatedAt    int64               `json:"created_at"`
 	UpdatedAt    int64               `json:"updated_at"`
+	Experience   ExperienceResponse  `json:"experience,omitempty"`
+	Host         HostProfileResponse `json:"host,omitempty"`
+	Rentable     []RentableResponse  `json:"rentable,omitempty"`
 }
 
 type PropertyCreateRequest struct {
@@ -33,6 +34,8 @@ func PropertyToResponse(property *entity.Property) *PropertyResponse {
 		host = &HostProfileResponse{}
 	}
 
+	rentable := RentableToResponses(property.Rentable)
+
 	return &PropertyResponse{
 		ID:           property.ID,
 		Experience:   *experience,
@@ -41,5 +44,6 @@ func PropertyToResponse(property *entity.Property) *PropertyResponse {
 		BookingType:  property.BookingType,
 		CreatedAt:    property.CreatedAt,
 		UpdatedAt:    property.UpdatedAt,
+		Rentable:     rentable,
 	}
 }

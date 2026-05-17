@@ -1,0 +1,74 @@
+@baseUrl = http://localhost:9000
+
+### ─── Upload Single File ─────────────────────────────────────────────────────
+
+# Sukses — upload satu gambar (field name: "file", maks 2MB)
+POST {{baseUrl}}/api/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="foto.jpg"
+Content-Type: image/jpeg
+
+< ./foto.jpg
+--boundary--
+
+###
+
+# Error: tanpa field "file" (400 Bad Request)
+POST {{baseUrl}}/api/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary--
+
+###
+
+# Error: file melebihi 2MB (400 Bad Request)
+POST {{baseUrl}}/api/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="besar.jpg"
+Content-Type: image/jpeg
+
+< ./besar.jpg
+--boundary--
+
+### ─── Upload Multiple Files ───────────────────────────────────────────────────
+
+# Sukses — upload dua gambar (field name: "files", maks 10MB per file)
+POST {{baseUrl}}/api/uploads
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="foto1.jpg"
+Content-Type: image/jpeg
+
+< ./foto1.jpg
+--boundary
+Content-Disposition: form-data; name="files"; filename="foto2.png"
+Content-Type: image/png
+
+< ./foto2.png
+--boundary--
+
+###
+
+# Error: tanpa field "files" sama sekali (400 Bad Request)
+POST {{baseUrl}}/api/uploads
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary--
+
+###
+
+# Error: semua file melebihi 10MB → di-skip semua → tidak ada hasil (400 Bad Request)
+POST {{baseUrl}}/api/uploads
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="sangat-besar.jpg"
+Content-Type: image/jpeg
+
+< ./sangat-besar.jpg
+--boundary--
