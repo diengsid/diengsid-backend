@@ -104,8 +104,18 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 		return nil, fiber.ErrInternalServerError
 	}
 
+	for _, amenityID := range req.AmenityIDs {
+		if err := tx.Exec(
+			"INSERT INTO property_amenities (property_id, amenity_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+			property.ID, amenityID,
+		).Error; err != nil {
+			u.Log.WithError(err).Error("FAILED TO ASSOCIATE AMENITY.")
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+
 	result := new(entity.Property)
-	err := u.ProperyRepo.FindById(tx, result, property.ID, "Host", "Experience")
+	err := u.ProperyRepo.FindById(tx, result, property.ID, "Host", "Experience", "Amenities")
 	if err != nil {
 		return nil, fiber.ErrInternalServerError
 	}
@@ -118,8 +128,8 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 	return model.PropertyToResponse(result), nil
 }
 
-// Get Property By ID
-func (u *PropertyUseCase) GetByID(ctx context.Context, id string) (*model.PropertyResponse, error) {
+// Get Property By Experience ID
+func (u *PropertyUseCase) GetByExperienceID(ctx context.Context, id string) (*model.PropertyResponse, error) {
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

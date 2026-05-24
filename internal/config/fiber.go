@@ -22,7 +22,7 @@ func NewFiber(cfg *viper.Viper) *fiber.App {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.GetString("app.cors_origins"),
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS,PATCH",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))

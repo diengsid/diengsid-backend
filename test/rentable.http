@@ -2,7 +2,7 @@
 
 ### ─── Create Rentable ─────────────────────────────────────────────────────────
 
-# Sukses — kamar standar dengan diskon
+# Sukses — kamar standar dengan diskon + amenity_ids
 POST {{baseUrl}}/api/rentables
 Content-Type: application/json
 
@@ -14,12 +14,13 @@ Content-Type: application/json
   "capacity": 2,
   "base_price": 250000,
   "discount": 10,
-  "stock": 5
+  "stock": 5,
+  "amenity_ids": ["your_amenity_id_1", "your_amenity_id_2"]
 }
 
 ###
 
-# Sukses — unit (villa) tanpa diskon; stock harus 1 untuk type unit
+# Sukses — unit (villa) tanpa diskon; stock harus 1 untuk type unit + amenity_ids
 POST {{baseUrl}}/api/rentables
 Content-Type: application/json
 
@@ -31,7 +32,8 @@ Content-Type: application/json
   "capacity": 6,
   "base_price": 1500000,
   "discount": 0,
-  "stock": 1
+  "stock": 1,
+  "amenity_ids": ["your_amenity_id_1"]
 }
 
 ###

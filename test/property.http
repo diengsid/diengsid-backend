@@ -2,7 +2,7 @@
 
 ### ─── Create Property ────────────────────────────────────────────────────────
 
-# Sukses — buat host baru sekaligus (inline host)
+# Sukses — buat host baru sekaligus (inline host) + amenity_ids
 POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
@@ -20,12 +20,13 @@ Content-Type: application/json
     "bio": "Host lokal berpengalaman di kawasan Dieng."
   },
   "property_type": "homestay",
-  "booking_type": "room"
+  "booking_type": "room",
+  "amenity_ids": ["your_amenity_id_1", "your_amenity_id_2"]
 }
 
 ###
 
-# Sukses — gunakan host yang sudah ada (via host_id)
+# Sukses — gunakan host yang sudah ada (via host_id) + amenity_ids
 POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
@@ -33,12 +34,13 @@ Content-Type: application/json
   "experience_id": "your_experience_id_here",
   "host_id": "your_host_id_here",
   "property_type": "villa",
-  "booking_type": "unit"
+  "booking_type": "unit",
+  "amenity_ids": ["your_amenity_id_1", "your_amenity_id_2"]
 }
 
 ###
 
-# Sukses — tanpa property_type dan booking_type (gunakan default)
+# Sukses — tanpa property_type, booking_type, dan amenity_ids (gunakan default)
 POST {{baseUrl}}/api/properties
 Content-Type: application/json
 

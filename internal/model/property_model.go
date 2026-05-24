@@ -22,6 +22,7 @@ type PropertyCreateRequest struct {
 	Host         *HostCreateRequest `json:"host,omitempty"`
 	PropertyType string             `json:"property_type"`
 	BookingType  string             `json:"booking_type"`
+	AmenityIDs   []string           `json:"amenity_ids,omitempty"`
 }
 
 func PropertyToResponse(property *entity.Property) *PropertyResponse {

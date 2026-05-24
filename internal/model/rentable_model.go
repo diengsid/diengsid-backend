@@ -3,14 +3,15 @@ package model
 import "id.diengs.backend/internal/entity"
 
 type RentableCreateRequest struct {
-	PropertyID string  `json:"property_id"`
-	Type       string  `json:"type"`
-	Name       string  `json:"name"`
-	ImageUrl   string  `json:"image_url"`
-	Capacity   int     `json:"capacity"`
-	BasePrice  float64 `json:"base_price"`
-	Discount   float64 `json:"discount"`
-	Stock      int     `json:"stock"`
+	PropertyID string   `json:"property_id"`
+	Type       string   `json:"type"`
+	Name       string   `json:"name"`
+	ImageUrl   string   `json:"image_url"`
+	Capacity   int      `json:"capacity"`
+	BasePrice  float64  `json:"base_price"`
+	Discount   float64  `json:"discount"`
+	Stock      int      `json:"stock"`
+	AmenityIDs []string `json:"amenity_ids,omitempty"`
 }
 
 type RentableResponse struct {

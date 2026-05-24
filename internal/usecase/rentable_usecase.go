@@ -78,6 +78,16 @@ func (u *RentableUseCase) Create(ctx context.Context, request *model.RentableCre
 		return nil, fiber.ErrInternalServerError
 	}
 
+	for _, amenityID := range request.AmenityIDs {
+		if err := tx.Exec(
+			"INSERT INTO rentable_amenities (rentable_id, amenity_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+			rentable.ID, amenityID,
+		).Error; err != nil {
+			u.Log.WithError(err).Error("FAILED TO ASSOCIATE AMENITY.")
+			return nil, fiber.ErrInternalServerError
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		u.Log.WithError(err).Error("FAILED TO COMMIT TRANSACTION.")
 		return nil, fiber.ErrInternalServerError

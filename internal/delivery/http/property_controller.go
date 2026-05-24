@@ -42,11 +42,11 @@ func (c *PropertyController) Create(ctx *fiber.Ctx) error {
 	})
 }
 
-// get property by id
+// get property by experience id
 func (c *PropertyController) GetByID(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 
-	response, err := c.PropertyUseCase.GetByID(ctx.UserContext(), id)
+	response, err := c.PropertyUseCase.GetByExperienceID(ctx.UserContext(), id)
 	if err != nil {
 		c.Log.WithError(err).Error("failed to get property by id")
 		return err
