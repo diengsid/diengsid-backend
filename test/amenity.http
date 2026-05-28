@@ -137,7 +137,7 @@ Content-Type: application/json
 
 ### ─── Get Property (verifikasi amenities muncul di response) ──────────────────
 
-# Amenities properti dan masing-masing rentable akan tampil di GET /api/properties/:experienceId
-GET {{baseUrl}}/api/properties/your_experience_id_here
+# Amenities properti dan masing-masing rentable akan tampil di GET /api/properties/:propertyId
+GET {{baseUrl}}/api/properties/your_property_id_here
 
 ###

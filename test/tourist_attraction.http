@@ -1,0 +1,187 @@
+@baseUrl = http://localhost:9000
+
+# Ganti dengan ID yang valid setelah membuat data
+@attractionId = your_attraction_id_here
+@propertyId   = your_property_id_here
+
+### ─── List Tourist Attractions ──────────────────────────────────────────────
+
+# Sukses — daftar semua objek wisata
+GET {{baseUrl}}/api/tourist-attractions
+
+###
+
+### ─── Create Tourist Attraction ─────────────────────────────────────────────
+
+# Sukses — objek wisata lengkap
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "name": "Telaga Warna",
+  "slug": "telaga-warna",
+  "description": "Danau kawah yang memiliki warna-warna indah akibat kandungan sulfur.",
+  "address": "Dieng, Kejajar, Wonosobo, Jawa Tengah",
+  "latitude": -7.2073,
+  "longitude": 109.9135,
+  "category": "nature",
+  "image_url": "https://example.com/images/telaga-warna.jpg"
+}
+
+###
+
+# Sukses — objek wisata minimal (hanya name dan slug)
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "name": "Candi Arjuna",
+  "slug": "candi-arjuna"
+}
+
+###
+
+# Sukses — objek wisata budaya
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "name": "Kawah Sikidang",
+  "slug": "kawah-sikidang",
+  "description": "Kawah aktif yang dapat dijangkau dengan berjalan kaki.",
+  "address": "Dieng, Banjarnegara, Jawa Tengah",
+  "latitude": -7.2151,
+  "longitude": 109.9172,
+  "category": "nature",
+  "image_url": "https://example.com/images/kawah-sikidang.jpg"
+}
+
+###
+
+# Sukses — objek wisata kuliner
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "name": "Pasar Dieng",
+  "slug": "pasar-dieng",
+  "description": "Pasar tradisional khas Dieng dengan berbagai oleh-oleh dan kuliner lokal.",
+  "address": "Dieng, Wonosobo, Jawa Tengah",
+  "category": "culinary"
+}
+
+###
+
+# Error: name kosong (400 Bad Request)
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "slug": "tanpa-nama"
+}
+
+###
+
+# Error: slug kosong (400 Bad Request)
+POST {{baseUrl}}/api/tourist-attractions
+Content-Type: application/json
+
+{
+  "name": "Tanpa Slug"
+}
+
+###
+
+### ─── Get Nearby Attractions by Property ─────────────────────────────────────
+
+# Sukses — daftar objek wisata dekat property
+GET {{baseUrl}}/api/properties/{{propertyId}}/nearby-attractions
+
+###
+
+# Error: property tidak ditemukan (404 Not Found)
+GET {{baseUrl}}/api/properties/property-id-tidak-ada/nearby-attractions
+
+###
+
+### ─── Set Nearby Attractions ─────────────────────────────────────────────────
+
+# Sukses — set objek wisata terdekat (menggantikan seluruh daftar lama)
+PUT {{baseUrl}}/api/properties/{{propertyId}}/nearby-attractions
+Content-Type: application/json
+
+{
+  "attractions": [
+    {
+      "tourist_attraction_id": "{{attractionId}}",
+      "distance_km": 1.5,
+      "duration_minutes": 10,
+      "sort_order": 1
+    }
+  ]
+}
+
+###
+
+# Sukses — set multiple objek wisata dengan urutan dan jarak berbeda
+PUT {{baseUrl}}/api/properties/{{propertyId}}/nearby-attractions
+Content-Type: application/json
+
+{
+  "attractions": [
+    {
+      "tourist_attraction_id": "attraction_id_1",
+      "distance_km": 0.8,
+      "duration_minutes": 5,
+      "sort_order": 1
+    },
+    {
+      "tourist_attraction_id": "attraction_id_2",
+      "distance_km": 2.3,
+      "duration_minutes": 15,
+      "sort_order": 2
+    },
+    {
+      "tourist_attraction_id": "attraction_id_3",
+      "distance_km": 5.0,
+      "duration_minutes": 20,
+      "sort_order": 3
+    }
+  ]
+}
+
+###
+
+# Sukses — kosongkan semua nearby attractions
+PUT {{baseUrl}}/api/properties/{{propertyId}}/nearby-attractions
+Content-Type: application/json
+
+{
+  "attractions": []
+}
+
+###
+
+# Error: property tidak ditemukan (404 Not Found)
+PUT {{baseUrl}}/api/properties/property-id-tidak-ada/nearby-attractions
+Content-Type: application/json
+
+{
+  "attractions": [
+    {
+      "tourist_attraction_id": "{{attractionId}}",
+      "distance_km": 1.5,
+      "duration_minutes": 10,
+      "sort_order": 1
+    }
+  ]
+}
+
+###
+
+### ─── Get Property (verifikasi nearby_attractions muncul di response) ────────
+
+# nearby_attractions akan tampil di dalam GET /api/properties/:id
+GET {{baseUrl}}/api/properties/{{propertyId}}
+
+###

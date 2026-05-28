@@ -1,6 +1,8 @@
 package http
 
 import (
+	"math"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"id.diengs.backend/internal/model"
@@ -22,7 +24,39 @@ func NewPropertyController(
 	}
 }
 
-// create property
+func (c *PropertyController) Search(ctx *fiber.Ctx) error {
+	req := &model.SearchPropertyRequest{
+		Key:          ctx.Query("key"),
+		CheckIn:      ctx.Query("check_in"),
+		CheckOut:     ctx.Query("check_out"),
+		GuestCount:   ctx.QueryInt("guest_count", 1),
+		AttractionID: ctx.Query("attraction_id"),
+		PropertyType: ctx.Query("property_type"),
+		Page:         ctx.QueryInt("page", 1),
+		Size:         ctx.QueryInt("size", 10),
+	}
+
+	responses, total, err := c.PropertyUseCase.Search(ctx.UserContext(), req)
+	if err != nil {
+		c.Log.WithError(err).Error("failed to search properties")
+		return err
+	}
+
+	paging := &model.PageMetadata{
+		Page:      req.Page,
+		Size:      req.Size,
+		TotalItem: total,
+		TotalPage: int64(math.Ceil(float64(total) / float64(req.Size))),
+	}
+
+	return ctx.JSON(model.WebResponse[[]model.PropertyResponse]{
+		Success: true,
+		Message: "success search properties",
+		Data:    responses,
+		Paging:  paging,
+	})
+}
+
 func (c *PropertyController) Create(ctx *fiber.Ctx) error {
 	req := new(model.PropertyCreateRequest)
 	if err := ctx.BodyParser(req); err != nil {
@@ -42,11 +76,10 @@ func (c *PropertyController) Create(ctx *fiber.Ctx) error {
 	})
 }
 
-// get property by experience id
 func (c *PropertyController) GetByID(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 
-	response, err := c.PropertyUseCase.GetByExperienceID(ctx.UserContext(), id)
+	response, err := c.PropertyUseCase.GetByID(ctx.UserContext(), id)
 	if err != nil {
 		c.Log.WithError(err).Error("failed to get property by id")
 		return err
