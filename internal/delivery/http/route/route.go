@@ -12,9 +12,9 @@ type RouteConfig struct {
 	AuthMiddleware  fiber.Handler
 	AdminMiddleware fiber.Handler
 
-	HealthController       *http.HealthController
-	UploadController       *http.UploadController
-	AuthController         *http.AuthController
+	HealthController            *http.HealthController
+	UploadController            *http.UploadController
+	AuthController              *http.AuthController
 	PropertyController          *http.PropertyController
 	RentableController          *http.RentableController
 	BookingController           *http.BookingController
@@ -22,6 +22,7 @@ type RouteConfig struct {
 	PaymentController           *http.PaymentController
 	AmenityController           *http.AmenityController
 	TouristAttractionController *http.TouristAttractionController
+	HostProfileController       *http.HostProfileController
 }
 
 func (c RouteConfig) Setup() {
@@ -36,6 +37,7 @@ func (c RouteConfig) Setup() {
 	c.SetupPayment()
 	c.SetupAmenity()
 	c.SetupTouristAttraction()
+	c.SetupHostProfile()
 }
 
 func (c RouteConfig) SetupAuth() {
@@ -121,4 +123,13 @@ func (c RouteConfig) SetupTouristAttraction() {
 
 	c.App.Get("/api/properties/:id/nearby-attractions", c.TouristAttractionController.GetNearbyByPropertyID)
 	c.App.Put("/api/properties/:id/nearby-attractions", c.TouristAttractionController.SetNearbyAttractions)
+}
+
+func (c RouteConfig) SetupHostProfile() {
+	host := c.App.Group("/api/hosts")
+	host.Get("/", c.HostProfileController.List)
+	host.Get("/:id", c.HostProfileController.GetByID)
+	host.Post("/", c.HostProfileController.Create)
+	host.Put("/:id", c.HostProfileController.Update)
+	host.Delete("/:id", c.HostProfileController.Delete)
 }

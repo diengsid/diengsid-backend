@@ -49,6 +49,7 @@ func Bootstrap(cfg *BootstrapConfig) {
 	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo)
 	amenityUseCase := usecase.NewAmenityUseCase(cfg.DB, cfg.Log, cfg.Validate, amenityRepo, propertyRepo, rentableRepo)
 	attractionUseCase := usecase.NewTouristAttractionUseCase(cfg.DB, cfg.Log, cfg.Validate, attractionRepo, propertyRepo)
+	hostProfileUseCase := usecase.NewHostProfileUseCase(cfg.DB, cfg.Log, cfg.Validate, hostProfileRepo)
 
 	dokuClient := pkg.NewDokuClient(cfg.Config)
 	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient)
@@ -64,6 +65,7 @@ func Bootstrap(cfg *BootstrapConfig) {
 	paymentController := http.NewPaymentController(cfg.Log, paymentUseCase, dokuClient)
 	amenityController := http.NewAmenityController(cfg.Log, amenityUseCase)
 	attractionController := http.NewTouristAttractionController(cfg.Log, attractionUseCase)
+	hostProfileController := http.NewHostProfileController(cfg.Log, hostProfileUseCase)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(authUseCase)
@@ -83,5 +85,6 @@ func Bootstrap(cfg *BootstrapConfig) {
 		PaymentController:      paymentController,
 		AmenityController:           amenityController,
 		TouristAttractionController: attractionController,
+		HostProfileController:       hostProfileController,
 	}.Setup()
 }
