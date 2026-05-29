@@ -11,6 +11,7 @@ type User struct {
 	ID            string  `gorm:"column:id;primaryKey"`
 	Name          string  `gorm:"column:name;not null"`
 	Email         string  `gorm:"column:email;uniqueIndex;not null"`
+	PhoneNumber   string  `gorm:"column:phone_number;default:''"`
 	EmailVerified bool    `gorm:"column:email_verified;default:false"`
 	Picture       *string `gorm:"column:picture"`
 	Provider      *string `gorm:"provider"`

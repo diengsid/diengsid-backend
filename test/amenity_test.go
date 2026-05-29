@@ -127,9 +127,8 @@ func TestCreateAmenity_MissingName(t *testing.T) {
 
 func TestSetPropertyAmenities_Success(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 	a1 := SeedAmenity("WiFi", "wifi", "connectivity")
 	a2 := SeedAmenity("Parkir", "parking", "facilities")
 
@@ -145,9 +144,8 @@ func TestSetPropertyAmenities_Success(t *testing.T) {
 
 func TestSetPropertyAmenities_Replaces(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 	a1 := SeedAmenity("WiFi", "wifi", "connectivity")
 	a2 := SeedAmenity("Parkir", "parking", "facilities")
 
@@ -167,9 +165,8 @@ func TestSetPropertyAmenities_Replaces(t *testing.T) {
 
 func TestSetPropertyAmenities_ClearAll(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 	a1 := SeedAmenity("WiFi", "wifi", "connectivity")
 	doSetPropertyAmenities(t, prop.ID, []string{a1.ID})
 

@@ -15,6 +15,7 @@ type BookingCreateRequest struct {
 	Quantity     int    `json:"quantity"`
 	GuestCount   int    `json:"guest_count"`
 	FirstPayment string `json:"first_payment"` // DP or FULL
+	PhoneNumber  string `json:"phone_number" validate:"required"`
 }
 
 type BookingResponse struct {

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"id.diengs.backend/internal/entity"
 	"id.diengs.backend/internal/model"
+	"id.diengs.backend/internal/pkg"
 	"id.diengs.backend/internal/repository"
 )
 
@@ -23,6 +25,8 @@ type BookingUseCase struct {
 	AvailabilityRepo *repository.AvailabilityRepo
 	PropertyRepo     *repository.PropertyRepo
 	HostProfileRepo  *repository.HostProfileRepo
+	UserRepo         *repository.UserRepo
+	Fonnte           *pkg.FonnteClient
 }
 
 func NewBookingUseCase(
@@ -34,6 +38,8 @@ func NewBookingUseCase(
 	availabilityRepo *repository.AvailabilityRepo,
 	propertyRepo *repository.PropertyRepo,
 	hostProfileRepo *repository.HostProfileRepo,
+	userRepo *repository.UserRepo,
+	fonnte *pkg.FonnteClient,
 ) *BookingUseCase {
 	return &BookingUseCase{
 		DB:               db,
@@ -44,7 +50,94 @@ func NewBookingUseCase(
 		AvailabilityRepo: availabilityRepo,
 		PropertyRepo:     propertyRepo,
 		HostProfileRepo:  hostProfileRepo,
+		UserRepo:         userRepo,
+		Fonnte:           fonnte,
 	}
+}
+
+// sendWA sends a WhatsApp message in a goroutine, logging any failure as a warning.
+func (u *BookingUseCase) sendWA(phone, message string) {
+	if phone == "" || u.Fonnte == nil {
+		return
+	}
+	go func() {
+		if _, err := u.Fonnte.SendOne(phone, message); err != nil {
+			u.Log.WithError(err).Warn("failed to send whatsapp notification")
+		}
+	}()
+}
+
+// notifyBookingCreated sends WA to both customer and host after booking is created.
+func (u *BookingUseCase) notifyBookingCreated(booking *entity.Booking) {
+	db := u.DB
+
+	// customer
+	user := new(entity.User)
+	if err := u.UserRepo.FindById(db, user, booking.UserID); err == nil && user.PhoneNumber != "" {
+		msg := fmt.Sprintf(
+			"Halo %s!\n\nBooking Anda berhasil dibuat dan sedang menunggu konfirmasi pemilik properti.\n\nDetail Booking:\nID        : %s\nCheck-in  : %s\nCheck-out : %s\nMalam     : %d\nTamu      : %d\nTotal     : Rp %.0f\n\nKami akan memberitahu Anda setelah pemilik mengonfirmasi.\n\nTerima kasih,\nTim Diengs.id",
+			user.Name,
+			booking.ID,
+			booking.CheckIn.Format("02 Jan 2006"),
+			booking.CheckOut.Format("02 Jan 2006"),
+			booking.TotalNight,
+			booking.GuestCount,
+			booking.TotalPrice,
+		)
+		u.sendWA(user.PhoneNumber, msg)
+	}
+
+	// host
+	property := new(entity.Property)
+	if err := u.PropertyRepo.FindById(db, property, booking.PropertyID, "Host"); err == nil && property.Host.PhoneNumber != "" {
+		msg := fmt.Sprintf(
+			"Halo %s!\n\nAda booking baru masuk untuk properti Anda.\n\nDetail Booking:\nID        : %s\nProperti  : %s\nCheck-in  : %s\nCheck-out : %s\nMalam     : %d\nTamu      : %d\nTotal     : Rp %.0f\n\nSilakan konfirmasi ketersediaan melalui dashboard.\n\nTerima kasih,\nTim Diengs.id",
+			property.Host.Name,
+			booking.ID,
+			property.Title,
+			booking.CheckIn.Format("02 Jan 2006"),
+			booking.CheckOut.Format("02 Jan 2006"),
+			booking.TotalNight,
+			booking.GuestCount,
+			booking.TotalPrice,
+		)
+		u.sendWA(property.Host.PhoneNumber, msg)
+	}
+}
+
+// notifyBookingConfirmed sends WA to customer after host confirms (WAITING_PAYMENT or UNAVAILABLE).
+func (u *BookingUseCase) notifyBookingConfirmed(booking *entity.Booking) {
+	db := u.DB
+
+	user := new(entity.User)
+	if err := u.UserRepo.FindById(db, user, booking.UserID); err != nil || user.PhoneNumber == "" {
+		return
+	}
+
+	var msg string
+	switch booking.Status {
+	case entity.StatusWaiting:
+		msg = fmt.Sprintf(
+			"Halo %s!\n\nKabar baik! Booking Anda telah dikonfirmasi oleh pemilik properti.\n\nID Booking : %s\nCheck-in   : %s\nCheck-out  : %s\nTotal      : Rp %.0f\n\nSegera selesaikan pembayaran agar booking Anda terkonfirmasi penuh.\n\nTerima kasih,\nTim Diengs.id",
+			user.Name,
+			booking.ID,
+			booking.CheckIn.Format("02 Jan 2006"),
+			booking.CheckOut.Format("02 Jan 2006"),
+			booking.TotalPrice,
+		)
+	case entity.StatusUnavailable:
+		msg = fmt.Sprintf(
+			"Halo %s!\n\nMohon maaf, pemilik properti menyatakan bahwa kamar tidak tersedia pada tanggal yang Anda pilih.\n\nID Booking : %s\nCheck-in   : %s\nCheck-out  : %s\n\nSilakan cari properti lain di Diengs.id.\n\nTerima kasih,\nTim Diengs.id",
+			user.Name,
+			booking.ID,
+			booking.CheckIn.Format("02 Jan 2006"),
+			booking.CheckOut.Format("02 Jan 2006"),
+		)
+	default:
+		return
+	}
+
+	u.sendWA(user.PhoneNumber, msg)
 }
 
 func (u *BookingUseCase) Create(ctx context.Context, userID string, req *model.BookingCreateRequest) (*model.BookingResponse, error) {
@@ -181,6 +274,19 @@ func (u *BookingUseCase) Create(ctx context.Context, userID string, req *model.B
 		return nil, fiber.ErrInternalServerError
 	}
 
+	// If caller provided a phone number and the user doesn't have one yet, persist it.
+	if req.PhoneNumber != "" {
+		user := new(entity.User)
+		if err := u.UserRepo.FindById(u.DB, user, userID); err == nil && user.PhoneNumber == "" {
+			user.PhoneNumber = req.PhoneNumber
+			if err := u.UserRepo.Update(u.DB, user); err != nil {
+				u.Log.WithError(err).Warn("failed to update user phone number")
+			}
+		}
+	}
+
+	u.notifyBookingCreated(booking)
+
 	return model.BookingToResponse(booking), nil
 }
 
@@ -256,6 +362,8 @@ func (u *BookingUseCase) ConfirmBooking(ctx context.Context, bookingID, userEmai
 	if err := tx.Commit().Error; err != nil {
 		return nil, fiber.ErrInternalServerError
 	}
+
+	u.notifyBookingConfirmed(booking)
 
 	return model.BookingToResponse(booking), nil
 }
@@ -426,6 +534,8 @@ func (u *BookingUseCase) AdminConfirmBooking(ctx context.Context, bookingID, new
 	if err := tx.Commit().Error; err != nil {
 		return nil, fiber.ErrInternalServerError
 	}
+
+	u.notifyBookingConfirmed(booking)
 
 	return model.BookingToResponse(booking), nil
 }

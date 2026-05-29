@@ -1,13 +1,76 @@
-@baseUrl = http://localhost:9000
+@baseUrl      = http://localhost:9000
+@propertyId   = your_property_id_here
+@attractionId = your_attraction_id_here
+
+### ─── Search Properties ─────────────────────────────────────────────────────
+
+# Sukses — semua property (tanpa filter)
+GET {{baseUrl}}/api/properties
+
+###
+
+# Sukses — filter berdasarkan keyword title/address
+GET {{baseUrl}}/api/properties?key=dieng
+
+###
+
+# Sukses — filter berdasarkan tipe property
+GET {{baseUrl}}/api/properties?property_type=villa
+
+###
+
+# Sukses — filter berdasarkan keyword + tipe property
+GET {{baseUrl}}/api/properties?key=dieng&property_type=homestay
+
+###
+
+# Sukses — filter berdasarkan ketersediaan tanggal + jumlah tamu
+GET {{baseUrl}}/api/properties?check_in=2026-06-01&check_out=2026-06-03&guest_count=2
+
+###
+
+# Sukses — filter berdasarkan tanggal + keyword
+GET {{baseUrl}}/api/properties?key=dieng&check_in=2026-06-01&check_out=2026-06-03&guest_count=1
+
+###
+
+# Sukses — filter berdasarkan objek wisata terdekat
+GET {{baseUrl}}/api/properties?attraction_id={{attractionId}}
+
+###
+
+# Sukses — kombinasi semua filter + pagination
+GET {{baseUrl}}/api/properties?key=dieng&property_type=homestay&check_in=2026-06-01&check_out=2026-06-03&guest_count=2&attraction_id={{attractionId}}&page=1&size=10
+
+###
+
+# Sukses — halaman ke-2
+GET {{baseUrl}}/api/properties?page=2&size=5
+
+###
+
+# Error: check_in tanpa check_out diabaikan (hanya filter key yang aktif)
+GET {{baseUrl}}/api/properties?check_in=2026-06-01&key=dieng
+
+###
+
+# Error: format tanggal salah (400 Bad Request)
+GET {{baseUrl}}/api/properties?check_in=01-06-2026&check_out=03-06-2026
+
+###
+
+# Error: check_out sebelum check_in (400 Bad Request)
+GET {{baseUrl}}/api/properties?check_in=2026-06-05&check_out=2026-06-01
+
+###
 
 ### ─── Create Property ────────────────────────────────────────────────────────
 
-# Sukses — buat host baru sekaligus (inline host) + amenity_ids
+# Sukses — buat host baru sekaligus (inline host) + images + amenity_ids
 POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
 {
-  "experience_id": "your_experience_id_here",
   "host": {
     "name": "Budi Santoso",
     "email": "budi@example.com",
@@ -21,6 +84,16 @@ Content-Type: application/json
   },
   "property_type": "homestay",
   "booking_type": "room",
+  "title": "Homestay Dieng Sejuk",
+  "address": "Dieng, Wonosobo",
+  "description": "Homestay nyaman dengan pemandangan alam Dieng yang asri.",
+  "thumbnail_url": "https://example.com/images/thumb.jpg",
+  "lat": -7.2132,
+  "lng": 109.9199,
+  "images": [
+    { "image_url": "https://example.com/images/img1.jpg", "is_primary": true },
+    { "image_url": "https://example.com/images/img2.jpg", "is_primary": false }
+  ],
   "amenity_ids": ["your_amenity_id_1", "your_amenity_id_2"]
 }
 
@@ -31,32 +104,38 @@ POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
 {
-  "experience_id": "your_experience_id_here",
   "host_id": "your_host_id_here",
   "property_type": "villa",
   "booking_type": "unit",
+  "title": "Villa Dieng Indah",
+  "address": "Dieng, Wonosobo",
+  "description": "Villa eksklusif dengan fasilitas lengkap di kawasan Dieng.",
   "amenity_ids": ["your_amenity_id_1", "your_amenity_id_2"]
 }
 
 ###
 
-# Sukses — tanpa property_type, booking_type, dan amenity_ids (gunakan default)
-POST {{baseUrl}}/api/properties
-Content-Type: application/json
-
-{
-  "experience_id": "your_experience_id_here",
-  "host_id": "your_host_id_here"
-}
-
-###
-
-# Error: experience_id kosong (400 Bad Request)
+# Sukses — minimal (tanpa property_type, booking_type, images, dan amenity_ids)
 POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
 {
   "host_id": "your_host_id_here",
+  "title": "Penginapan Dieng",
+  "address": "Dieng, Wonosobo",
+  "description": "Penginapan sederhana di kawasan Dieng."
+}
+
+###
+
+# Error: title kosong (400 Bad Request)
+POST {{baseUrl}}/api/properties
+Content-Type: application/json
+
+{
+  "host_id": "your_host_id_here",
+  "address": "Dieng, Wonosobo",
+  "description": "Deskripsi properti.",
   "property_type": "homestay",
   "booking_type": "room"
 }
@@ -68,7 +147,9 @@ POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
 {
-  "experience_id": "your_experience_id_here",
+  "title": "Homestay Dieng",
+  "address": "Dieng, Wonosobo",
+  "description": "Deskripsi properti.",
   "property_type": "homestay",
   "booking_type": "room"
 }
@@ -80,21 +161,23 @@ POST {{baseUrl}}/api/properties
 Content-Type: application/json
 
 {
-  "experience_id": "your_experience_id_here",
   "host": {
     "email": "budi@example.com",
     "phone_number": "08123456789"
   },
+  "title": "Homestay Dieng",
+  "address": "Dieng, Wonosobo",
+  "description": "Deskripsi properti.",
   "property_type": "homestay",
   "booking_type": "room"
 }
 
-### ─── Get Property by Experience ID ─────────────────────────────────────────
+### ─── Get Property by ID ──────────────────────────────────────────────────────
 
-# Sukses (gunakan experience_id, bukan property_id)
-GET {{baseUrl}}/api/properties/your_experience_id_here
+# Sukses (gunakan property_id)
+GET {{baseUrl}}/api/properties/your_property_id_here
 
 ###
 
 # Error: tidak ditemukan (404 Not Found)
-GET {{baseUrl}}/api/properties/experience-id-tidak-ada
+GET {{baseUrl}}/api/properties/property-id-tidak-ada

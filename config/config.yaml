@@ -32,6 +32,9 @@ mail:
   username: iddiengs@gmail.com
   password: "lkpe qqmx degv biip"
 
+fonnte:
+  token: "@cbpg@@SEQiHwme6fZVc" # isi dengan token Fonnte dari https://app.fonnte.com/profile
+
 googe:
   clientId: 314501383101-t83bulhqb5ugib4s57t5hepheqt2rdgo.apps.googleusercontent.com
 
@@ -41,4 +44,4 @@ doku:
   is_sandbox: true
   success_url: "http://localhost:3000/payment/result?status=success"
   failed_url: "http://localhost:3000/payment/result?status=failed"
-  notification_url: "https://e543-182-8-211-227.ngrok-free.app/api/payment/notify"
+  notification_url: "https://a415-103-189-116-22.ngrok-free.app/api/payment/notify"

@@ -1,0 +1,139 @@
+@baseUrl = http://localhost:9000
+
+# Ganti dengan ID yang valid setelah membuat data
+@hostId = your_host_id_here
+
+### ─── List Hosts ───────────────────────────────────────────────────────────────
+
+# Sukses — daftar semua host
+GET {{baseUrl}}/api/hosts
+
+###
+
+# Sukses — filter host berdasarkan nama / email
+GET {{baseUrl}}/api/hosts?key=budi
+
+###
+
+### ─── Get Host by ID ────────────────────────────────────────────────────────────
+
+# Sukses — detail host
+GET {{baseUrl}}/api/hosts/{{hostId}}
+
+###
+
+# Error: host tidak ditemukan (404 Not Found)
+GET {{baseUrl}}/api/hosts/host-id-tidak-ada
+
+###
+
+### ─── Create Host ────────────────────────────────────────────────────────────────
+
+# Sukses — data lengkap
+POST {{baseUrl}}/api/hosts
+Content-Type: application/json
+
+{
+  "name": "Budi Santoso",
+  "email": "budi@example.com",
+  "phone_number": "+6281234567890",
+  "profile_picture_url": "",
+  "address": "Jl. Raya Dieng No. 10, Wonosobo",
+  "bank_account_name": "Budi Santoso",
+  "bank_account_number": "1234567890",
+  "ktp_number": "3307012501900001",
+  "bio": "Host berpengalaman di kawasan Dieng sejak 2018."
+}
+
+###
+
+# Sukses — data minimal (hanya field required)
+POST {{baseUrl}}/api/hosts
+Content-Type: application/json
+
+{
+  "name": "Siti Rahayu",
+  "email": "siti@example.com",
+  "phone_number": "+6289876543210"
+}
+
+###
+
+# Error: name kosong (400 Bad Request)
+POST {{baseUrl}}/api/hosts
+Content-Type: application/json
+
+{
+  "email": "tanpanama@example.com",
+  "phone_number": "+6281111111111"
+}
+
+###
+
+# Error: email kosong (400 Bad Request)
+POST {{baseUrl}}/api/hosts
+Content-Type: application/json
+
+{
+  "name": "Tanpa Email",
+  "phone_number": "+6282222222222"
+}
+
+###
+
+### ─── Update Host ────────────────────────────────────────────────────────────────
+
+# Sukses — update sebagian field
+PUT {{baseUrl}}/api/hosts/{{hostId}}
+Content-Type: application/json
+
+{
+  "bio": "Host terpercaya di Dieng, sudah melayani lebih dari 500 tamu.",
+  "bank_account_name": "Budi Santoso",
+  "bank_account_number": "9876543210"
+}
+
+###
+
+# Sukses — update nomor telepon dan alamat
+PUT {{baseUrl}}/api/hosts/{{hostId}}
+Content-Type: application/json
+
+{
+  "phone_number": "+6281999999999",
+  "address": "Jl. Telaga Warna No. 5, Dieng, Banjarnegara"
+}
+
+###
+
+# Sukses — update foto profil
+PUT {{baseUrl}}/api/hosts/{{hostId}}
+Content-Type: application/json
+
+{
+  "profile_picture_url": "https://example.com/foto-budi.jpg"
+}
+
+###
+
+# Error: host tidak ditemukan (404 Not Found)
+PUT {{baseUrl}}/api/hosts/host-id-tidak-ada
+Content-Type: application/json
+
+{
+  "bio": "Update gagal karena ID tidak ada"
+}
+
+###
+
+### ─── Delete Host ────────────────────────────────────────────────────────────────
+
+# Sukses — hapus host
+DELETE {{baseUrl}}/api/hosts/{{hostId}}
+
+###
+
+# Error: host tidak ditemukan (404 Not Found)
+DELETE {{baseUrl}}/api/hosts/host-id-tidak-ada
+
+###

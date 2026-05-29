@@ -25,10 +25,9 @@ func ClearAll() {
 	ClearRentableAmenities()
 	ClearPropertyAmenities()
 	ClearRentables()
+	ClearPropertyImages()
 	ClearProperties()
 	ClearHostProfiles()
-	ClearExperienceImages()
-	ClearExperiences()
 	ClearUsers()
 	ClearAmenities()
 }
@@ -57,6 +56,12 @@ func ClearRentables() {
 	}
 }
 
+func ClearPropertyImages() {
+	if err := db.Where("id IS NOT NULL").Delete(&entity.PropertyImage{}).Error; err != nil {
+		log.Fatalf("failed to clear property_images: %v", err)
+	}
+}
+
 func ClearProperties() {
 	if err := db.Where("id IS NOT NULL").Delete(&entity.Property{}).Error; err != nil {
 		log.Fatalf("failed to clear properties: %v", err)
@@ -69,18 +74,6 @@ func ClearHostProfiles() {
 	}
 }
 
-func ClearExperienceImages() {
-	if err := db.Where("id IS NOT NULL").Delete(&entity.ExperienceImage{}).Error; err != nil {
-		log.Fatalf("failed to clear experience_images: %v", err)
-	}
-}
-
-func ClearExperiences() {
-	if err := db.Where("id IS NOT NULL").Delete(&entity.Experience{}).Error; err != nil {
-		log.Fatalf("failed to clear experiences: %v", err)
-	}
-}
-
 func ClearUsers() {
 	if err := db.Where("id IS NOT NULL").Delete(&entity.User{}).Error; err != nil {
 		log.Fatalf("failed to clear users: %v", err)
@@ -88,24 +81,6 @@ func ClearUsers() {
 }
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
-
-func SeedExperience() *entity.Experience {
-	return SeedExperienceWith("nature", "Dieng Plateau Tour", 150_000)
-}
-
-func SeedExperienceWith(experienceType, title string, basePrice float64) *entity.Experience {
-	exp := &entity.Experience{
-		ExperienceType: experienceType,
-		Title:          title,
-		Address:        "Dieng, Wonosobo",
-		Description:    "Deskripsi singkat untuk " + title,
-		BasePrice:      basePrice,
-	}
-	if err := db.Create(exp).Error; err != nil {
-		log.Fatalf("failed to seed experience: %v", err)
-	}
-	return exp
-}
 
 func SeedHostProfile() *entity.HostProfile {
 	host := &entity.HostProfile{
@@ -119,12 +94,14 @@ func SeedHostProfile() *entity.HostProfile {
 	return host
 }
 
-func SeedProperty(hostID, experienceID string) *entity.Property {
+func SeedProperty(hostID string) *entity.Property {
 	prop := &entity.Property{
 		HostID:       hostID,
-		ExperienceID: experienceID,
 		PropertyType: "homestay",
 		BookingType:  "room",
+		Title:        "Homestay Dieng",
+		Address:      "Dieng, Wonosobo",
+		Description:  "Homestay nyaman di kawasan Dieng",
 	}
 	if err := db.Create(prop).Error; err != nil {
 		log.Fatalf("failed to seed property: %v", err)
@@ -148,16 +125,14 @@ func SeedRentable(propertyID string) *entity.Rentable {
 }
 
 func SeedRentableWithDeps() *entity.Rentable {
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 	return SeedRentable(prop.ID)
 }
 
 func SeedRentableWith(stock int, rentableType string) *entity.Rentable {
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 	rentable := &entity.Rentable{
 		PropertyID: prop.ID,
 		Type:       rentableType,

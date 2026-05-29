@@ -39,7 +39,7 @@ func (c *UploadController) Upload(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(model.WebResponse[model.UploadResponse]{
 		Success: true,
-		Message: "success create experience",
+		Message: "success upload file",
 		Data:    *response,
 	})
 }
@@ -71,7 +71,7 @@ func (c *UploadController) Uploads(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(model.WebResponse[model.UploadResponses]{
 		Success: true,
-		Message: "success create experience",
+		Message: "success upload file",
 		Data:    *response,
 	})
 }

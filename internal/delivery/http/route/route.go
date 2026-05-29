@@ -9,27 +9,26 @@ import (
 type RouteConfig struct {
 	App *fiber.App
 	// Middleware
-	AuthMiddleware   fiber.Handler
-	AdminMiddleware  fiber.Handler
-	HealthController *http.HealthController
-	UploadController *http.UploadController
+	AuthMiddleware  fiber.Handler
+	AdminMiddleware fiber.Handler
 
-	AuthController *http.AuthController
-
-	ExperienceController    *http.ExperienceController
-	PropertyController      *http.PropertyController
-	RentableController      *http.RentableController
-	BookingController       *http.BookingController
-	AvailabilityController  *http.AvailabilityController
-	PaymentController       *http.PaymentController
-	AmenityController       *http.AmenityController
+	HealthController            *http.HealthController
+	UploadController            *http.UploadController
+	AuthController              *http.AuthController
+	PropertyController          *http.PropertyController
+	RentableController          *http.RentableController
+	BookingController           *http.BookingController
+	AvailabilityController      *http.AvailabilityController
+	PaymentController           *http.PaymentController
+	AmenityController           *http.AmenityController
+	TouristAttractionController *http.TouristAttractionController
+	HostProfileController       *http.HostProfileController
 }
 
 func (c RouteConfig) Setup() {
 	c.App.Get("/", c.HealthController.Check)
 	c.App.Get("/api/health", c.HealthController.Check)
 	c.SetupAuth()
-	c.SetupExperience()
 	c.SetupProperty()
 	c.SetupUpload()
 	c.SetupRentable()
@@ -37,6 +36,8 @@ func (c RouteConfig) Setup() {
 	c.SetupAvailability()
 	c.SetupPayment()
 	c.SetupAmenity()
+	c.SetupTouristAttraction()
+	c.SetupHostProfile()
 }
 
 func (c RouteConfig) SetupAuth() {
@@ -56,19 +57,11 @@ func (c RouteConfig) SetupUpload() {
 	upload := c.App.Group("/api")
 	upload.Post("/upload", c.UploadController.Upload)
 	upload.Post("/uploads", c.UploadController.Uploads)
-
-}
-
-func (c RouteConfig) SetupExperience() {
-	experience := c.App.Group("/api/experiences")
-	experience.Get("/", c.ExperienceController.Search)
-
-	adminRoute := experience.Group("/")
-	adminRoute.Post("/", c.ExperienceController.Create)
 }
 
 func (c RouteConfig) SetupProperty() {
 	property := c.App.Group("/api/properties")
+	property.Get("/", c.PropertyController.Search)
 	property.Get("/:id", c.PropertyController.GetByID)
 
 	adminRoute := property.Group("/")
@@ -121,4 +114,22 @@ func (c RouteConfig) SetupAmenity() {
 
 	c.App.Put("/api/properties/:id/amenities", c.AmenityController.SetPropertyAmenities)
 	c.App.Put("/api/rentables/:id/amenities", c.AmenityController.SetRentableAmenities)
+}
+
+func (c RouteConfig) SetupTouristAttraction() {
+	attraction := c.App.Group("/api/tourist-attractions")
+	attraction.Get("/", c.TouristAttractionController.List)
+	attraction.Post("/", c.TouristAttractionController.Create)
+
+	c.App.Get("/api/properties/:id/nearby-attractions", c.TouristAttractionController.GetNearbyByPropertyID)
+	c.App.Put("/api/properties/:id/nearby-attractions", c.TouristAttractionController.SetNearbyAttractions)
+}
+
+func (c RouteConfig) SetupHostProfile() {
+	host := c.App.Group("/api/hosts")
+	host.Get("/", c.HostProfileController.List)
+	host.Get("/:id", c.HostProfileController.GetByID)
+	host.Post("/", c.HostProfileController.Create)
+	host.Put("/:id", c.HostProfileController.Update)
+	host.Delete("/:id", c.HostProfileController.Delete)
 }

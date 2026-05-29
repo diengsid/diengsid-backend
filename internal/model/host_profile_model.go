@@ -29,6 +29,18 @@ type HostCreateRequest struct {
 	Bio               string `json:"bio"`
 }
 
+type HostUpdateRequest struct {
+	Name              string `json:"name"`
+	Email             string `json:"email"`
+	PhoneNumber       string `json:"phone_number"`
+	ProfilePictureURL string `json:"profile_picture_url"`
+	Address           string `json:"address"`
+	BankAccountName   string `json:"bank_account_name"`
+	BankAccountNumber string `json:"bank_account_number"`
+	KTPNumber         string `json:"ktp_number"`
+	Bio               string `json:"bio"`
+}
+
 func HostToResponse(host *entity.HostProfile) *HostProfileResponse {
 	return &HostProfileResponse{
 		ID:                host.ID,

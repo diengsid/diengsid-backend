@@ -26,9 +26,8 @@ func doCreateRentable(t *testing.T, req model.RentableCreateRequest) *http.Respo
 
 func TestCreateRentable_Success(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 
 	resp := doCreateRentable(t, model.RentableCreateRequest{
 		PropertyID: prop.ID,
@@ -58,9 +57,8 @@ func TestCreateRentable_Success(t *testing.T) {
 
 func TestCreateRentable_SuccessUnitType(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 
 	resp := doCreateRentable(t, model.RentableCreateRequest{
 		PropertyID: prop.ID,
@@ -97,9 +95,8 @@ func TestCreateRentable_PropertyNotFound(t *testing.T) {
 
 func TestCreateRentable_UnitTypeStockGreaterThan1(t *testing.T) {
 	ClearAll()
-	exp := SeedExperience()
 	host := SeedHostProfile()
-	prop := SeedProperty(host.ID, exp.ID)
+	prop := SeedProperty(host.ID)
 
 	resp := doCreateRentable(t, model.RentableCreateRequest{
 		PropertyID: prop.ID,

@@ -27,5 +27,8 @@ mail:
   username:
   password:
 
+fonnte:
+  token:
+
 googe:
   clientId:

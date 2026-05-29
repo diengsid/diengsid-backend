@@ -29,35 +29,36 @@ func Bootstrap(cfg *BootstrapConfig) {
 	userRepo := repository.NewUserRepo(cfg.Log)
 	emailOtpRepo := repository.NewEmailOtpRepo(cfg.Log)
 	sessionRepo := repository.NewSessionRepo(cfg.Log)
-	experienceRepo := repository.NewExperienceRepo(cfg.Log)
-	experienceImageRepo := repository.NewExperienceImageRepo(cfg.Log)
 	propertyRepo := repository.NewPropertyRepo(cfg.Log)
+	propertyImageRepo := repository.NewPropertyImageRepo(cfg.Log)
 	hostProfileRepo := repository.NewHostProfileRepo(cfg.Log)
 	rentableRepo := repository.NewRentableRepo(cfg.Log)
 	bookingRepo := repository.NewBookingRepo(cfg.Log)
 	availabilityRepo := repository.NewAvailabilityRepo(cfg.Log)
 	paymentRepo := repository.NewPaymentRepo(cfg.Log)
 	amenityRepo := repository.NewAmenityRepo(cfg.Log)
+	attractionRepo := repository.NewTouristAttractionRepo(cfg.Log)
 
 	// Use Case Config
+	fonnteClient := pkg.NewFonnteClient(cfg.Config, cfg.Log)
+
 	healthUseCase := usecase.NewHealthUseCase(cfg.Config)
 	authUseCase := usecase.NewAuthUseCase(cfg.DB, cfg.Log, cfg.Validate, cfg.Mail, userRepo, emailOtpRepo, sessionRepo, cfg.Config)
-	experienceUseCase := usecase.NewExperienceUseCase(cfg.DB, cfg.Log, cfg.Validate, experienceRepo, experienceImageRepo)
-	propertyUseCase := usecase.NewPropertyUseCase(cfg.DB, cfg.Log, cfg.Validate, propertyRepo, hostProfileRepo)
+	propertyUseCase := usecase.NewPropertyUseCase(cfg.DB, cfg.Log, cfg.Validate, propertyRepo, propertyImageRepo, hostProfileRepo, fonnteClient)
 	uploadUseCase := usecase.NewUploadUseCase(cfg.Log, cfg.Validate, cfg.Config)
 	rentableUseCase := usecase.NewRentableUseCase(cfg.DB, cfg.Log, cfg.Validate, rentableRepo, propertyRepo)
 	availabilityUseCase := usecase.NewAvailabilityUseCase(cfg.DB, cfg.Log, cfg.Validate, availabilityRepo, rentableRepo)
-	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo)
-
+	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo, userRepo, fonnteClient)
 	amenityUseCase := usecase.NewAmenityUseCase(cfg.DB, cfg.Log, cfg.Validate, amenityRepo, propertyRepo, rentableRepo)
+	attractionUseCase := usecase.NewTouristAttractionUseCase(cfg.DB, cfg.Log, cfg.Validate, attractionRepo, propertyRepo)
+	hostProfileUseCase := usecase.NewHostProfileUseCase(cfg.DB, cfg.Log, cfg.Validate, hostProfileRepo)
 
 	dokuClient := pkg.NewDokuClient(cfg.Config)
-	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient)
+	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient, fonnteClient)
 
 	// Controller Config
 	healthController := http.NewHealthController(healthUseCase, cfg.Log)
 	authController := http.NewAuthController(authUseCase, cfg.Log, cfg.Config)
-	experienceController := http.NewExperienceController(experienceUseCase, cfg.Log)
 	propertyCotroller := http.NewPropertyController(cfg.Log, propertyUseCase)
 	uploadController := http.NewUploadController(cfg.Log, uploadUseCase)
 	rentableController := http.NewRentableController(cfg.Log, rentableUseCase)
@@ -65,6 +66,8 @@ func Bootstrap(cfg *BootstrapConfig) {
 	availabilityController := http.NewAvailabilityController(cfg.Log, availabilityUseCase)
 	paymentController := http.NewPaymentController(cfg.Log, paymentUseCase, dokuClient)
 	amenityController := http.NewAmenityController(cfg.Log, amenityUseCase)
+	attractionController := http.NewTouristAttractionController(cfg.Log, attractionUseCase)
+	hostProfileController := http.NewHostProfileController(cfg.Log, hostProfileUseCase)
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(authUseCase)
@@ -76,13 +79,14 @@ func Bootstrap(cfg *BootstrapConfig) {
 		AdminMiddleware:        adminMiddleware,
 		HealthController:       healthController,
 		AuthController:         authController,
-		ExperienceController:   experienceController,
 		PropertyController:     propertyCotroller,
 		UploadController:       uploadController,
 		RentableController:     rentableController,
 		BookingController:      bookingController,
 		AvailabilityController: availabilityController,
 		PaymentController:      paymentController,
-		AmenityController:      amenityController,
+		AmenityController:           amenityController,
+		TouristAttractionController: attractionController,
+		HostProfileController:       hostProfileController,
 	}.Setup()
 }
