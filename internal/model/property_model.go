@@ -14,16 +14,16 @@ type PropertyImageResponse struct {
 }
 
 type PropertyResponse struct {
-	ID                string                    `json:"id"`
-	PropertyType      string                    `json:"property_type"`
-	BookingType       string                    `json:"booking_type"`
-	Title             string                    `json:"title"`
-	Address           string                    `json:"address"`
-	Description       string                    `json:"description"`
-	ThumbnailURL      *string                   `json:"thumbnail_url,omitempty"`
-	Lat               *float64                  `json:"lat,omitempty"`
-	Lng               *float64                  `json:"lng,omitempty"`
-	Images            []PropertyImageResponse   `json:"images,omitempty"`
+	ID                string                     `json:"id"`
+	PropertyType      string                     `json:"property_type"`
+	BookingType       string                     `json:"booking_type"`
+	Title             string                     `json:"title"`
+	Address           string                     `json:"address"`
+	Description       string                     `json:"description"`
+	ThumbnailURL      *string                    `json:"thumbnail_url,omitempty"`
+	Lat               *float64                   `json:"lat,omitempty"`
+	Lng               *float64                   `json:"lng,omitempty"`
+	Images            []PropertyImageResponse    `json:"images,omitempty"`
 	Host              HostProfileResponse        `json:"host,omitempty"`
 	Rentable          []RentableResponse         `json:"rentable,omitempty"`
 	Amenities         []AmenityResponse          `json:"amenities,omitempty"`
@@ -40,7 +40,7 @@ type SearchPropertyRequest struct {
 	AttractionID string `query:"attraction_id"`
 	PropertyType string `query:"property_type"`
 	Page         int    `query:"page"          validate:"min=1"`
-	Size         int    `query:"size"          validate:"min=1,max=100"`
+	Size         int    `query:"size"          validate:"min=1"`
 }
 
 type PropertyImageCreateRequest struct {
