@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -10,6 +11,7 @@ import (
 	"gorm.io/gorm"
 	"id.diengs.backend/internal/entity"
 	"id.diengs.backend/internal/model"
+	"id.diengs.backend/internal/pkg"
 	"id.diengs.backend/internal/repository"
 )
 
@@ -20,6 +22,7 @@ type PropertyUseCase struct {
 	ProperyRepo       *repository.PropertyRepo
 	PropertyImageRepo *repository.PropertyImageRepo
 	HostProfileRepo   *repository.HostProfileRepo
+	Fonnte            *pkg.FonnteClient
 }
 
 func NewPropertyUseCase(
@@ -29,6 +32,7 @@ func NewPropertyUseCase(
 	propertyRepo *repository.PropertyRepo,
 	propertyImageRepo *repository.PropertyImageRepo,
 	hostProfileRepo *repository.HostProfileRepo,
+	fonnte *pkg.FonnteClient,
 ) *PropertyUseCase {
 	return &PropertyUseCase{
 		DB:                db,
@@ -37,6 +41,7 @@ func NewPropertyUseCase(
 		ProperyRepo:       propertyRepo,
 		PropertyImageRepo: propertyImageRepo,
 		HostProfileRepo:   hostProfileRepo,
+		Fonnte:            fonnte,
 	}
 }
 
@@ -138,6 +143,24 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 		u.Log.WithError(err).Error("FAILED TO COMMIT TRANSACTION.")
 		return nil, fiber.ErrInternalServerError
 	}
+
+	// Send WhatsApp notification to host (non-blocking)
+	go func() {
+		phone := result.Host.PhoneNumber
+		if phone == "" || u.Fonnte == nil {
+			return
+		}
+		msg := fmt.Sprintf(
+			"Halo %s!\n\nProperti baru Anda telah berhasil terdaftar di Diengs.id.\n\nDetail Properti:\nNama    : %s\nTipe    : %s\nAlamat  : %s\n\nSilakan kelola properti Anda melalui dashboard admin.\n\nTerima kasih,\nTim Diengs.id",
+			result.Host.Name,
+			result.Title,
+			result.PropertyType,
+			result.Address,
+		)
+		if _, err := u.Fonnte.SendOne(phone, msg); err != nil {
+			u.Log.WithError(err).Warn("failed to send whatsapp notification to host")
+		}
+	}()
 
 	return model.PropertyToResponse(result), nil
 }

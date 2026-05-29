@@ -21,6 +21,7 @@ type PaymentUseCase struct {
 	UserRepo    *repository.UserRepo
 	PaymentRepo *repository.PaymentRepo
 	Doku        *pkg.DokuClient
+	Fonnte      *pkg.FonnteClient
 }
 
 func NewPaymentUseCase(
@@ -30,6 +31,7 @@ func NewPaymentUseCase(
 	userRepo *repository.UserRepo,
 	paymentRepo *repository.PaymentRepo,
 	doku *pkg.DokuClient,
+	fonnte *pkg.FonnteClient,
 ) *PaymentUseCase {
 	return &PaymentUseCase{
 		DB:          db,
@@ -38,7 +40,19 @@ func NewPaymentUseCase(
 		UserRepo:    userRepo,
 		PaymentRepo: paymentRepo,
 		Doku:        doku,
+		Fonnte:      fonnte,
 	}
+}
+
+func (u *PaymentUseCase) sendWA(phone, message string) {
+	if phone == "" || u.Fonnte == nil {
+		return
+	}
+	go func() {
+		if _, err := u.Fonnte.SendOne(phone, message); err != nil {
+			u.Log.WithError(err).Warn("failed to send whatsapp notification")
+		}
+	}()
 }
 
 // GetPaymentByBooking returns the existing payment record for a booking (owner only).
@@ -144,6 +158,14 @@ func (u *PaymentUseCase) CreatePayment(ctx context.Context, bookingID, userID st
 		return nil, fiber.ErrInternalServerError
 	}
 
+	if user.PhoneNumber != "" {
+		msg := fmt.Sprintf(
+			"Halo %s!\n\nLink pembayaran untuk booking Anda sudah siap.\n\nID Booking : %s\nTotal      : Rp %.0f\n\nSegera selesaikan pembayaran melalui link berikut:\n%s\n\nLink berlaku dalam waktu terbatas.\n\nTerima kasih,\nTim Diengs.id",
+			user.Name, bookingID, booking.TotalPrice, paymentURL,
+		)
+		u.sendWA(user.PhoneNumber, msg)
+	}
+
 	return &model.CreatePaymentResponse{
 		PaymentURL: paymentURL,
 		InvoiceNo:  invoiceNo,
@@ -193,5 +215,34 @@ func (u *PaymentUseCase) HandleNotification(ctx context.Context, notif *model.Do
 		}
 	}
 
-	return tx.Commit().Error
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	user := new(entity.User)
+	if err := u.UserRepo.FindById(u.DB, user, booking.UserID); err == nil && user.PhoneNumber != "" {
+		var msg string
+		switch notif.Transaction.Status {
+		case "SUCCESS":
+			msg = fmt.Sprintf(
+				"Halo %s!\n\nPembayaran Anda telah berhasil dikonfirmasi.\n\nID Booking : %s\nTotal      : Rp %.0f\n\nSelamat menikmati liburan Anda! Tunjukkan konfirmasi ini saat check-in.\n\nTerima kasih,\nTim Diengs.id",
+				user.Name, bookingID, booking.TotalPrice,
+			)
+		case "FAILED":
+			msg = fmt.Sprintf(
+				"Halo %s!\n\nMohon maaf, pembayaran untuk booking Anda gagal diproses.\n\nID Booking : %s\n\nSilakan coba lagi melalui aplikasi.\n\nTerima kasih,\nTim Diengs.id",
+				user.Name, bookingID,
+			)
+		case "EXPIRED":
+			msg = fmt.Sprintf(
+				"Halo %s!\n\nLink pembayaran untuk booking Anda telah kedaluwarsa.\n\nID Booking : %s\n\nSilakan buat link pembayaran baru melalui aplikasi.\n\nTerima kasih,\nTim Diengs.id",
+				user.Name, bookingID,
+			)
+		}
+		if msg != "" {
+			u.sendWA(user.PhoneNumber, msg)
+		}
+	}
+
+	return nil
 }

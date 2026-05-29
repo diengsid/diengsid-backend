@@ -1,9 +1,10 @@
 package entity
 
 import (
+	"crypto/rand"
+	"math/big"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -56,8 +57,19 @@ func (Booking) TableName() string {
 	return "bookings"
 }
 
+const bookingIDChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func generateBookingID() string {
+	suffix := make([]byte, 6)
+	for i := range suffix {
+		n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(bookingIDChars))))
+		suffix[i] = bookingIDChars[n.Int64()]
+	}
+	return "DID-" + string(suffix)
+}
+
 func (b *Booking) BeforeCreate(tx *gorm.DB) (err error) {
-	b.ID = uuid.NewString()
+	b.ID = generateBookingID()
 	b.CreatedAt = int64(time.Now().UnixMilli())
 	b.UpdatedAt = int64(time.Now().UnixMilli())
 	return nil

@@ -40,19 +40,21 @@ func Bootstrap(cfg *BootstrapConfig) {
 	attractionRepo := repository.NewTouristAttractionRepo(cfg.Log)
 
 	// Use Case Config
+	fonnteClient := pkg.NewFonnteClient(cfg.Config, cfg.Log)
+
 	healthUseCase := usecase.NewHealthUseCase(cfg.Config)
 	authUseCase := usecase.NewAuthUseCase(cfg.DB, cfg.Log, cfg.Validate, cfg.Mail, userRepo, emailOtpRepo, sessionRepo, cfg.Config)
-	propertyUseCase := usecase.NewPropertyUseCase(cfg.DB, cfg.Log, cfg.Validate, propertyRepo, propertyImageRepo, hostProfileRepo)
+	propertyUseCase := usecase.NewPropertyUseCase(cfg.DB, cfg.Log, cfg.Validate, propertyRepo, propertyImageRepo, hostProfileRepo, fonnteClient)
 	uploadUseCase := usecase.NewUploadUseCase(cfg.Log, cfg.Validate, cfg.Config)
 	rentableUseCase := usecase.NewRentableUseCase(cfg.DB, cfg.Log, cfg.Validate, rentableRepo, propertyRepo)
 	availabilityUseCase := usecase.NewAvailabilityUseCase(cfg.DB, cfg.Log, cfg.Validate, availabilityRepo, rentableRepo)
-	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo)
+	bookingUseCase := usecase.NewBookingUseCase(cfg.DB, cfg.Log, cfg.Validate, bookingRepo, rentableRepo, availabilityRepo, propertyRepo, hostProfileRepo, userRepo, fonnteClient)
 	amenityUseCase := usecase.NewAmenityUseCase(cfg.DB, cfg.Log, cfg.Validate, amenityRepo, propertyRepo, rentableRepo)
 	attractionUseCase := usecase.NewTouristAttractionUseCase(cfg.DB, cfg.Log, cfg.Validate, attractionRepo, propertyRepo)
 	hostProfileUseCase := usecase.NewHostProfileUseCase(cfg.DB, cfg.Log, cfg.Validate, hostProfileRepo)
 
 	dokuClient := pkg.NewDokuClient(cfg.Config)
-	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient)
+	paymentUseCase := usecase.NewPaymentUseCase(cfg.DB, cfg.Log, bookingRepo, userRepo, paymentRepo, dokuClient, fonnteClient)
 
 	// Controller Config
 	healthController := http.NewHealthController(healthUseCase, cfg.Log)
