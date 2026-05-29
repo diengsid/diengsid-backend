@@ -53,6 +53,7 @@ func TestCheckAvailability_AfterBooking(t *testing.T) {
 		RentableID: rentable.ID,
 		CheckIn:    "2026-07-01",
 		CheckOut:   "2026-07-03",
+		PhoneNumber: "08123456789",
 		Quantity:   2,
 	})
 
@@ -87,6 +88,7 @@ func TestCheckAvailability_FullyBooked(t *testing.T) {
 		RentableID: rentable.ID,
 		CheckIn:    "2026-08-01",
 		CheckOut:   "2026-08-02",
+		PhoneNumber: "08123456789",
 		Quantity:   5,
 	})
 

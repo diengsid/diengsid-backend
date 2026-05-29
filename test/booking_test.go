@@ -39,6 +39,7 @@ func TestCreateBooking_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-08-01",
 		CheckOut:   "2026-08-04",
+		PhoneNumber: "08123456789",
 		Quantity:   1,
 	})
 
@@ -65,6 +66,7 @@ func TestCreateBooking_Unauthorized(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-08-01",
 		CheckOut:   "2026-08-04",
+		PhoneNumber: "08123456789",
 	})
 
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
@@ -78,6 +80,7 @@ func TestCreateBooking_ValidationError(t *testing.T) {
 		PropertyID: "some-property-id",
 		CheckIn:    "2026-08-01",
 		CheckOut:   "2026-08-04",
+		PhoneNumber: "08123456789",
 	})
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -93,6 +96,7 @@ func TestCreateBooking_InvalidDateFormat(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "01-08-2026",
 		CheckOut:   "04-08-2026",
+		PhoneNumber: "08123456789",
 	})
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -108,6 +112,7 @@ func TestCreateBooking_CheckoutBeforeCheckin(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-08-10",
 		CheckOut:   "2026-08-05",
+		PhoneNumber: "08123456789",
 	})
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -125,6 +130,7 @@ func TestGetBookingByID_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-01",
 		CheckOut:   "2026-09-03",
+		PhoneNumber: "08123456789",
 		Quantity:   1,
 	})
 	assert.Equal(t, http.StatusCreated, createResp.StatusCode)
@@ -170,6 +176,7 @@ func TestGetBookingByID_Forbidden(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-01",
 		CheckOut:   "2026-09-03",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -199,12 +206,14 @@ func TestGetMyBookings_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-10-01",
 		CheckOut:   "2026-10-03",
+		PhoneNumber: "08123456789",
 	})
 	doCreateBooking(t, token, model.BookingCreateRequest{
 		RentableID: rentable.ID,
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-11-01",
 		CheckOut:   "2026-11-04",
+		PhoneNumber: "08123456789",
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/bookings/my", nil)
@@ -241,6 +250,7 @@ func TestComplete_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-01",
 		CheckOut:   "2026-09-03",
+		PhoneNumber: "08123456789",
 		Quantity:   1,
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
@@ -273,6 +283,7 @@ func TestComplete_WrongStatus(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-01",
 		CheckOut:   "2026-09-03",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -297,6 +308,7 @@ func TestComplete_Forbidden(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-01",
 		CheckOut:   "2026-09-03",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -327,6 +339,7 @@ func TestConfirmBooking_Success_WaitingPayment(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-09-10",
 		CheckOut:   "2026-09-12",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -360,6 +373,7 @@ func TestConfirmBooking_Success_Unavailable(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-10-01",
 		CheckOut:   "2026-10-03",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -392,6 +406,7 @@ func TestConfirmBooking_Forbidden_NotOwner(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-10-05",
 		CheckOut:   "2026-10-07",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -418,6 +433,7 @@ func TestConfirmBooking_WrongStatus(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-10-10",
 		CheckOut:   "2026-10-12",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -450,6 +466,7 @@ func TestCheckout_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-11-01",
 		CheckOut:   "2026-11-04",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -482,6 +499,7 @@ func TestCheckout_WrongStatus(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-11-10",
 		CheckOut:   "2026-11-12",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -510,6 +528,7 @@ func TestGetHostBookings_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-12-01",
 		CheckOut:   "2026-12-03",
+		PhoneNumber: "08123456789",
 	})
 
 	hostToken := RegisterWithEmail(t, "Host Test", "host@test.com")
@@ -537,6 +556,7 @@ func TestGetAllBookings_Admin_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-12-10",
 		CheckOut:   "2026-12-12",
+		PhoneNumber: "08123456789",
 	})
 
 	adminToken := SeedAdminAndGetToken(t)
@@ -575,6 +595,7 @@ func TestAdminConfirmBooking_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-12-15",
 		CheckOut:   "2026-12-17",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -606,6 +627,7 @@ func TestAdminCheckout_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-12-20",
 		CheckOut:   "2026-12-22",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
@@ -637,6 +659,7 @@ func TestAdminComplete_Success(t *testing.T) {
 		PropertyID: rentable.PropertyID,
 		CheckIn:    "2026-12-25",
 		CheckOut:   "2026-12-27",
+		PhoneNumber: "08123456789",
 	})
 	var createBody model.WebResponse[*model.BookingResponse]
 	data, _ := io.ReadAll(createResp.Body)
