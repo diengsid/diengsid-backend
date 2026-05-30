@@ -34,6 +34,7 @@ func (r *PropertyRepo) Search(
 	if err := base.
 		Preload("Images").
 		Preload("Host").
+		Preload("Rentable").
 		Preload("Amenities").
 		Preload("NearbyAttractions").
 		Preload("NearbyAttractions.TouristAttraction").
