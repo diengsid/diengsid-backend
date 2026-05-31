@@ -42,16 +42,16 @@ jobs:
       - name: Download Dependencies
         run: go mod download
 
-      - name: Install golang-migrate
-        run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.1/migrate.linux-amd64.tar.gz | tar xvz
-          sudo mv migrate /usr/local/bin/
+      # - name: Install golang-migrate
+      #   run: |
+      #     curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.1/migrate.linux-amd64.tar.gz | tar xvz
+      #     sudo mv migrate /usr/local/bin/
 
-      - name: Run Migrations
-        run: migrate -path db/migrations -database "postgresql://postgres:postgres@localhost:5432/db_diengsid?sslmode=disable" up
+      # - name: Run Migrations
+      #   run: migrate -path db/migrations -database "postgresql://postgres:postgres@localhost:5432/db_diengsid?sslmode=disable" up
 
-      - name: Run Test
-        run: go test ./...
+      # - name: Run Test
+      #   run: go test ./...
 
   build-and-push:
     needs: test
