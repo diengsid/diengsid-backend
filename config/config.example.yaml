@@ -27,8 +27,9 @@ mail:
   username:
   password:
 
-fonnte:
-  token:
+wapisender:
+  api_key:
+  device_key:
 
 googe:
   clientId:

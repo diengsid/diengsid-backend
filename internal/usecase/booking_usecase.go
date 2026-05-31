@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 
@@ -13,6 +12,8 @@ import (
 	"id.diengs.backend/internal/entity"
 	"id.diengs.backend/internal/model"
 	"id.diengs.backend/internal/pkg"
+	"id.diengs.backend/internal/pkg/mailview"
+	"id.diengs.backend/internal/pkg/message"
 	"id.diengs.backend/internal/repository"
 )
 
@@ -26,7 +27,8 @@ type BookingUseCase struct {
 	PropertyRepo     *repository.PropertyRepo
 	HostProfileRepo  *repository.HostProfileRepo
 	UserRepo         *repository.UserRepo
-	Fonnte           *pkg.FonnteClient
+	WA               pkg.WhatsAppSender
+	Mail             *pkg.Mail
 }
 
 func NewBookingUseCase(
@@ -39,7 +41,8 @@ func NewBookingUseCase(
 	propertyRepo *repository.PropertyRepo,
 	hostProfileRepo *repository.HostProfileRepo,
 	userRepo *repository.UserRepo,
-	fonnte *pkg.FonnteClient,
+	wa pkg.WhatsAppSender,
+	mail *pkg.Mail,
 ) *BookingUseCase {
 	return &BookingUseCase{
 		DB:               db,
@@ -51,93 +54,90 @@ func NewBookingUseCase(
 		PropertyRepo:     propertyRepo,
 		HostProfileRepo:  hostProfileRepo,
 		UserRepo:         userRepo,
-		Fonnte:           fonnte,
+		WA:               wa,
+		Mail:             mail,
 	}
 }
 
 // sendWA sends a WhatsApp message in a goroutine, logging any failure as a warning.
 func (u *BookingUseCase) sendWA(phone, message string) {
-	if phone == "" || u.Fonnte == nil {
+	if phone == "" || u.WA == nil {
 		return
 	}
 	go func() {
-		if _, err := u.Fonnte.SendOne(phone, message); err != nil {
+		if err := u.WA.SendOne(phone, message); err != nil {
 			u.Log.WithError(err).Warn("failed to send whatsapp notification")
 		}
 	}()
 }
 
-// notifyBookingCreated sends WA to both customer and host after booking is created.
+// sendMail sends an email in a goroutine, logging any failure as a warning.
+func (u *BookingUseCase) sendMail(to, subject, body string) {
+	if to == "" || u.Mail == nil {
+		return
+	}
+	go func() {
+		if err := u.Mail.SendMail([]string{to}, subject, body); err != nil {
+			u.Log.WithError(err).Warn("failed to send email notification")
+		}
+	}()
+}
+
+// notifyBookingCreated sends WA and email to both customer and host after booking is created.
 func (u *BookingUseCase) notifyBookingCreated(booking *entity.Booking) {
 	db := u.DB
+	checkIn := booking.CheckIn.Format("02 Jan 2006")
+	checkOut := booking.CheckOut.Format("02 Jan 2006")
 
 	// customer
 	user := new(entity.User)
-	if err := u.UserRepo.FindById(db, user, booking.UserID); err == nil && user.PhoneNumber != "" {
-		msg := fmt.Sprintf(
-			"Halo %s!\n\nBooking Anda berhasil dibuat dan sedang menunggu konfirmasi pemilik properti.\n\nDetail Booking:\nID        : %s\nCheck-in  : %s\nCheck-out : %s\nMalam     : %d\nTamu      : %d\nTotal     : Rp %.0f\n\nKami akan memberitahu Anda setelah pemilik mengonfirmasi.\n\nTerima kasih,\nTim Diengs.id",
-			user.Name,
-			booking.ID,
-			booking.CheckIn.Format("02 Jan 2006"),
-			booking.CheckOut.Format("02 Jan 2006"),
-			booking.TotalNight,
-			booking.GuestCount,
-			booking.TotalPrice,
+	if err := u.UserRepo.FindById(db, user, booking.UserID); err == nil {
+		u.sendWA(user.PhoneNumber, message.BookingCreatedCustomer(user.Name, booking.ID, checkIn, checkOut, booking.TotalNight, booking.GuestCount, booking.TotalPrice))
+		u.sendMail(user.Email, "Booking Berhasil Dibuat - Diengs.id",
+			mailview.BookingCreatedCustomerMailView(user.Name, booking.ID, "", checkIn, checkOut, booking.TotalNight, booking.GuestCount, booking.TotalPrice),
 		)
-		u.sendWA(user.PhoneNumber, msg)
 	}
 
 	// host
 	property := new(entity.Property)
-	if err := u.PropertyRepo.FindById(db, property, booking.PropertyID, "Host"); err == nil && property.Host.PhoneNumber != "" {
-		msg := fmt.Sprintf(
-			"Halo %s!\n\nAda booking baru masuk untuk properti Anda.\n\nDetail Booking:\nID        : %s\nProperti  : %s\nCheck-in  : %s\nCheck-out : %s\nMalam     : %d\nTamu      : %d\nTotal     : Rp %.0f\n\nSilakan konfirmasi ketersediaan melalui dashboard.\n\nTerima kasih,\nTim Diengs.id",
-			property.Host.Name,
-			booking.ID,
-			property.Title,
-			booking.CheckIn.Format("02 Jan 2006"),
-			booking.CheckOut.Format("02 Jan 2006"),
-			booking.TotalNight,
-			booking.GuestCount,
-			booking.TotalPrice,
+	if err := u.PropertyRepo.FindById(db, property, booking.PropertyID, "Host"); err == nil {
+		u.sendWA(property.Host.PhoneNumber, message.BookingCreatedHost(property.Host.Name, booking.ID, property.Title, checkIn, checkOut, booking.TotalNight, booking.GuestCount, booking.TotalPrice))
+		u.sendMail(property.Host.Email, "Booking Baru Masuk - Diengs.id",
+			mailview.BookingCreatedHostMailView(property.Host.Name, booking.ID, property.Title, checkIn, checkOut, booking.TotalNight, booking.GuestCount, booking.TotalPrice),
 		)
-		u.sendWA(property.Host.PhoneNumber, msg)
 	}
 }
 
-// notifyBookingConfirmed sends WA to customer after host confirms (WAITING_PAYMENT or UNAVAILABLE).
+// notifyBookingConfirmed sends WA and email to customer after host confirms (WAITING_PAYMENT or UNAVAILABLE).
 func (u *BookingUseCase) notifyBookingConfirmed(booking *entity.Booking) {
 	db := u.DB
+	checkIn := booking.CheckIn.Format("02 Jan 2006")
+	checkOut := booking.CheckOut.Format("02 Jan 2006")
 
 	user := new(entity.User)
-	if err := u.UserRepo.FindById(db, user, booking.UserID); err != nil || user.PhoneNumber == "" {
+	if err := u.UserRepo.FindById(db, user, booking.UserID); err != nil {
 		return
 	}
 
-	var msg string
+	var msg, subject string
+	var approved bool
 	switch booking.Status {
 	case entity.StatusWaiting:
-		msg = fmt.Sprintf(
-			"Halo %s!\n\nKabar baik! Booking Anda telah dikonfirmasi oleh pemilik properti.\n\nID Booking : %s\nCheck-in   : %s\nCheck-out  : %s\nTotal      : Rp %.0f\n\nSegera selesaikan pembayaran agar booking Anda terkonfirmasi penuh.\n\nTerima kasih,\nTim Diengs.id",
-			user.Name,
-			booking.ID,
-			booking.CheckIn.Format("02 Jan 2006"),
-			booking.CheckOut.Format("02 Jan 2006"),
-			booking.TotalPrice,
-		)
+		approved = true
+		subject = "Booking Anda Dikonfirmasi - Diengs.id"
+		msg = message.BookingConfirmedCustomer(user.Name, booking.ID, checkIn, checkOut, booking.TotalPrice)
 	case entity.StatusUnavailable:
-		msg = fmt.Sprintf(
-			"Halo %s!\n\nMohon maaf, pemilik properti menyatakan bahwa kamar tidak tersedia pada tanggal yang Anda pilih.\n\nID Booking : %s\nCheck-in   : %s\nCheck-out  : %s\n\nSilakan cari properti lain di Diengs.id.\n\nTerima kasih,\nTim Diengs.id",
-			user.Name,
-			booking.ID,
-			booking.CheckIn.Format("02 Jan 2006"),
-			booking.CheckOut.Format("02 Jan 2006"),
-		)
+		approved = false
+		subject = "Kamar Tidak Tersedia - Diengs.id"
+		msg = message.BookingUnavailableCustomer(user.Name, booking.ID, checkIn, checkOut)
 	default:
 		return
 	}
 
 	u.sendWA(user.PhoneNumber, msg)
+	u.sendMail(user.Email, subject,
+		mailview.BookingConfirmedMailView(user.Name, booking.ID, checkIn, checkOut, booking.TotalPrice, approved),
+	)
 }
 
 func (u *BookingUseCase) Create(ctx context.Context, userID string, req *model.BookingCreateRequest) (*model.BookingResponse, error) {

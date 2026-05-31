@@ -30,10 +30,14 @@ mail:
   host: smtp.gmail.com
   port: 587
   username: iddiengs@gmail.com
-  password: "lkpe qqmx degv biip"
+  password: "utox sqho zcxe ksrf"
 
-fonnte:
-  token: "@cbpg@@SEQiHwme6fZVc" # isi dengan token Fonnte dari https://app.fonnte.com/profile
+# fonnte:
+#   token: "@cbpg@@SEQiHwme6fZVc" # isi dengan token Fonnte dari https://app.fonnte.com/profile
+
+wapisender:
+  api_key: "Gv4ipamkiDwVHyB2NiO5pilm9C5eGT0yP7R6x8AG1p01idTbSklz1N0mWjWh"
+  device_key: "WAPI-CCBJ5Z"
 
 googe:
   clientId: 314501383101-t83bulhqb5ugib4s57t5hepheqt2rdgo.apps.googleusercontent.com

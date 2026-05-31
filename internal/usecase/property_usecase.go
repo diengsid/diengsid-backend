@@ -12,6 +12,8 @@ import (
 	"id.diengs.backend/internal/entity"
 	"id.diengs.backend/internal/model"
 	"id.diengs.backend/internal/pkg"
+	"id.diengs.backend/internal/pkg/mailview"
+	"id.diengs.backend/internal/pkg/message"
 	"id.diengs.backend/internal/repository"
 )
 
@@ -22,7 +24,9 @@ type PropertyUseCase struct {
 	ProperyRepo       *repository.PropertyRepo
 	PropertyImageRepo *repository.PropertyImageRepo
 	HostProfileRepo   *repository.HostProfileRepo
-	Fonnte            *pkg.FonnteClient
+	WA                pkg.WhatsAppSender
+	Mail              *pkg.Mail
+	FrontendURL       string
 }
 
 func NewPropertyUseCase(
@@ -32,7 +36,9 @@ func NewPropertyUseCase(
 	propertyRepo *repository.PropertyRepo,
 	propertyImageRepo *repository.PropertyImageRepo,
 	hostProfileRepo *repository.HostProfileRepo,
-	fonnte *pkg.FonnteClient,
+	wa pkg.WhatsAppSender,
+	mail *pkg.Mail,
+	frontendURL string,
 ) *PropertyUseCase {
 	return &PropertyUseCase{
 		DB:                db,
@@ -41,7 +47,9 @@ func NewPropertyUseCase(
 		ProperyRepo:       propertyRepo,
 		PropertyImageRepo: propertyImageRepo,
 		HostProfileRepo:   hostProfileRepo,
-		Fonnte:            fonnte,
+		WA:                wa,
+		Mail:              mail,
+		FrontendURL:       frontendURL,
 	}
 }
 
@@ -144,21 +152,20 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// Send WhatsApp notification to host (non-blocking)
+	// Send WhatsApp + email notification to host (non-blocking)
 	go func() {
-		phone := result.Host.PhoneNumber
-		if phone == "" || u.Fonnte == nil {
-			return
+		propertyURL := fmt.Sprintf("%s/penginapan/%s", u.FrontendURL, result.ID)
+		if result.Host.PhoneNumber != "" && u.WA != nil {
+			if err := u.WA.SendOne(result.Host.PhoneNumber, message.PropertyCreatedHost(result.Host.Name, result.Title, result.PropertyType, result.Address, propertyURL)); err != nil {
+				u.Log.WithError(err).Warn("failed to send whatsapp notification to host")
+			}
 		}
-		msg := fmt.Sprintf(
-			"Halo %s!\n\nProperti baru Anda telah berhasil terdaftar di Diengs.id.\n\nDetail Properti:\nNama    : %s\nTipe    : %s\nAlamat  : %s\n\nSilakan kelola properti Anda melalui dashboard admin.\n\nTerima kasih,\nTim Diengs.id",
-			result.Host.Name,
-			result.Title,
-			result.PropertyType,
-			result.Address,
-		)
-		if _, err := u.Fonnte.SendOne(phone, msg); err != nil {
-			u.Log.WithError(err).Warn("failed to send whatsapp notification to host")
+		if result.Host.Email != "" && u.Mail != nil {
+			if err := u.Mail.SendMail([]string{result.Host.Email}, "Properti Berhasil Terdaftar - Diengs.id",
+				mailview.PropertyCreatedMailView(result.Host.Name, result.Title, result.PropertyType, result.Address, propertyURL),
+			); err != nil {
+				u.Log.WithError(err).Warn("failed to send email notification to host")
+			}
 		}
 	}()
 

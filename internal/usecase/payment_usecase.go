@@ -11,17 +11,21 @@ import (
 	"id.diengs.backend/internal/entity"
 	"id.diengs.backend/internal/model"
 	"id.diengs.backend/internal/pkg"
+	"id.diengs.backend/internal/pkg/mailview"
+	"id.diengs.backend/internal/pkg/message"
 	"id.diengs.backend/internal/repository"
 )
 
 type PaymentUseCase struct {
-	DB          *gorm.DB
-	Log         *logrus.Logger
-	BookingRepo *repository.BookingRepo
-	UserRepo    *repository.UserRepo
-	PaymentRepo *repository.PaymentRepo
-	Doku        *pkg.DokuClient
-	Fonnte      *pkg.FonnteClient
+	DB           *gorm.DB
+	Log          *logrus.Logger
+	BookingRepo  *repository.BookingRepo
+	UserRepo     *repository.UserRepo
+	PaymentRepo  *repository.PaymentRepo
+	PropertyRepo *repository.PropertyRepo
+	Doku         *pkg.DokuClient
+	WA           pkg.WhatsAppSender
+	Mail         *pkg.Mail
 }
 
 func NewPaymentUseCase(
@@ -30,27 +34,42 @@ func NewPaymentUseCase(
 	bookingRepo *repository.BookingRepo,
 	userRepo *repository.UserRepo,
 	paymentRepo *repository.PaymentRepo,
+	propertyRepo *repository.PropertyRepo,
 	doku *pkg.DokuClient,
-	fonnte *pkg.FonnteClient,
+	wa pkg.WhatsAppSender,
+	mail *pkg.Mail,
 ) *PaymentUseCase {
 	return &PaymentUseCase{
-		DB:          db,
-		Log:         log,
-		BookingRepo: bookingRepo,
-		UserRepo:    userRepo,
-		PaymentRepo: paymentRepo,
-		Doku:        doku,
-		Fonnte:      fonnte,
+		DB:           db,
+		Log:          log,
+		BookingRepo:  bookingRepo,
+		UserRepo:     userRepo,
+		PaymentRepo:  paymentRepo,
+		PropertyRepo: propertyRepo,
+		Doku:         doku,
+		WA:           wa,
+		Mail:         mail,
 	}
 }
 
 func (u *PaymentUseCase) sendWA(phone, message string) {
-	if phone == "" || u.Fonnte == nil {
+	if phone == "" || u.WA == nil {
 		return
 	}
 	go func() {
-		if _, err := u.Fonnte.SendOne(phone, message); err != nil {
+		if err := u.WA.SendOne(phone, message); err != nil {
 			u.Log.WithError(err).Warn("failed to send whatsapp notification")
+		}
+	}()
+}
+
+func (u *PaymentUseCase) sendMail(to, subject, body string) {
+	if to == "" || u.Mail == nil {
+		return
+	}
+	go func() {
+		if err := u.Mail.SendMail([]string{to}, subject, body); err != nil {
+			u.Log.WithError(err).Warn("failed to send email notification")
 		}
 	}()
 }
@@ -158,13 +177,10 @@ func (u *PaymentUseCase) CreatePayment(ctx context.Context, bookingID, userID st
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if user.PhoneNumber != "" {
-		msg := fmt.Sprintf(
-			"Halo %s!\n\nLink pembayaran untuk booking Anda sudah siap.\n\nID Booking : %s\nTotal      : Rp %.0f\n\nSegera selesaikan pembayaran melalui link berikut:\n%s\n\nLink berlaku dalam waktu terbatas.\n\nTerima kasih,\nTim Diengs.id",
-			user.Name, bookingID, booking.TotalPrice, paymentURL,
-		)
-		u.sendWA(user.PhoneNumber, msg)
-	}
+	u.sendWA(user.PhoneNumber, message.PaymentLinkCustomer(user.Name, bookingID, booking.TotalPrice, paymentURL))
+	u.sendMail(user.Email, "Link Pembayaran Booking - Diengs.id",
+		mailview.PaymentLinkMailView(user.Name, bookingID, paymentURL, booking.TotalPrice),
+	)
 
 	return &model.CreatePaymentResponse{
 		PaymentURL: paymentURL,
@@ -220,27 +236,45 @@ func (u *PaymentUseCase) HandleNotification(ctx context.Context, notif *model.Do
 	}
 
 	user := new(entity.User)
-	if err := u.UserRepo.FindById(u.DB, user, booking.UserID); err == nil && user.PhoneNumber != "" {
-		var msg string
-		switch notif.Transaction.Status {
+	if err := u.UserRepo.FindById(u.DB, user, booking.UserID); err == nil {
+		status := notif.Transaction.Status
+		var msg, subject string
+		switch status {
 		case "SUCCESS":
-			msg = fmt.Sprintf(
-				"Halo %s!\n\nPembayaran Anda telah berhasil dikonfirmasi.\n\nID Booking : %s\nTotal      : Rp %.0f\n\nSelamat menikmati liburan Anda! Tunjukkan konfirmasi ini saat check-in.\n\nTerima kasih,\nTim Diengs.id",
-				user.Name, bookingID, booking.TotalPrice,
-			)
+			subject = "Pembayaran Berhasil - Diengs.id"
+			msg = message.PaymentSuccessCustomer(user.Name, bookingID, booking.TotalPrice)
 		case "FAILED":
-			msg = fmt.Sprintf(
-				"Halo %s!\n\nMohon maaf, pembayaran untuk booking Anda gagal diproses.\n\nID Booking : %s\n\nSilakan coba lagi melalui aplikasi.\n\nTerima kasih,\nTim Diengs.id",
-				user.Name, bookingID,
-			)
+			subject = "Pembayaran Gagal - Diengs.id"
+			msg = message.PaymentFailedCustomer(user.Name, bookingID)
 		case "EXPIRED":
-			msg = fmt.Sprintf(
-				"Halo %s!\n\nLink pembayaran untuk booking Anda telah kedaluwarsa.\n\nID Booking : %s\n\nSilakan buat link pembayaran baru melalui aplikasi.\n\nTerima kasih,\nTim Diengs.id",
-				user.Name, bookingID,
-			)
+			subject = "Link Pembayaran Kedaluwarsa - Diengs.id"
+			msg = message.PaymentExpiredCustomer(user.Name, bookingID)
 		}
 		if msg != "" {
 			u.sendWA(user.PhoneNumber, msg)
+			u.sendMail(user.Email, subject,
+				mailview.PaymentStatusMailView(user.Name, bookingID, status, booking.TotalPrice),
+			)
+		}
+	}
+
+	// Notify host when payment is successful
+	if notif.Transaction.Status == "SUCCESS" {
+		property := new(entity.Property)
+		if err := u.PropertyRepo.FindById(u.DB, property, booking.PropertyID, "Host"); err == nil {
+			checkIn := booking.CheckIn.Format("02 Jan 2006")
+			checkOut := booking.CheckOut.Format("02 Jan 2006")
+
+			user := new(entity.User)
+			guestName := bookingID
+			if err := u.UserRepo.FindById(u.DB, user, booking.UserID); err == nil {
+				guestName = user.Name
+			}
+
+			u.sendWA(property.Host.PhoneNumber, message.PaymentSuccessHost(property.Host.Name, bookingID, guestName, property.Title, checkIn, checkOut, booking.GuestCount, booking.TotalPrice))
+			u.sendMail(property.Host.Email, "Pembayaran Tamu Diterima - Diengs.id",
+				mailview.BookingPaidHostMailView(property.Host.Name, bookingID, guestName, property.Title, checkIn, checkOut, booking.GuestCount, booking.TotalPrice),
+			)
 		}
 	}
 
