@@ -91,3 +91,19 @@ func (c *PropertyController) GetByID(ctx *fiber.Ctx) error {
 		Data:    *response,
 	})
 }
+
+func (c *PropertyController) GetBySlug(ctx *fiber.Ctx) error {
+	slug := ctx.Params("slug")
+
+	response, err := c.PropertyUseCase.GetBySlug(ctx.UserContext(), slug)
+	if err != nil {
+		c.Log.WithError(err).Error("failed to get property by slug")
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse[model.PropertyResponse]{
+		Success: true,
+		Message: "success get property by slug",
+		Data:    *response,
+	})
+}

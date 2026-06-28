@@ -38,27 +38,27 @@ services:
     networks:
       - diengsid-net
 
-  database:
-    image: postgres:15-alpine
-    container_name: diengsid-database
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: db_diengsid
-      TZ: Asia/Jakarta
-    ports:
-      - 5432:5432
-    volumes:
-      - database_data:/var/lib/postgresql/data
-    networks:
-      - diengsid-net
+  # database:
+  #   image: postgres:15-alpine
+  #   container_name: diengsid-database
+  #   restart: always
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: db_diengsid
+  #     TZ: Asia/Jakarta
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - database_data:/var/lib/postgresql/data
+  #   networks:
+  #     - diengsid-net
 
 networks:
   diengsid-net:
     name: diengsid-net
     driver: bridge
 
-volumes:
-  database_data:
-    name: database-data
+# volumes:
+#   database_data:
+#     name: database-data

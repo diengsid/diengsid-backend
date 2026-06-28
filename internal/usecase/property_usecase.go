@@ -107,6 +107,7 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 		PropertyType: req.PropertyType,
 		BookingType:  req.BookingType,
 		Title:        req.Title,
+		Slug:         req.Slug,
 		Address:      req.Address,
 		Description:  req.Description,
 		ThumbnailURL: req.ThumbnailURL,
@@ -154,7 +155,7 @@ func (u *PropertyUseCase) Create(ctx context.Context, req *model.PropertyCreateR
 
 	// Send WhatsApp + email notification to host (non-blocking)
 	go func() {
-		propertyURL := fmt.Sprintf("%s/penginapan/%s", u.FrontendURL, result.ID)
+		propertyURL := fmt.Sprintf("%s/penginapan/%s", u.FrontendURL, result.Slug)
 		if result.Host.PhoneNumber != "" && u.WA != nil {
 			if err := u.WA.SendOne(result.Host.PhoneNumber, message.PropertyCreatedHost(result.Host.Name, result.Title, result.PropertyType, result.Address, propertyURL)); err != nil {
 				u.Log.WithError(err).Warn("failed to send whatsapp notification to host")
@@ -217,6 +218,30 @@ func (u *PropertyUseCase) Search(ctx context.Context, req *model.SearchPropertyR
 	}
 
 	return responses, total, nil
+}
+
+// Get Property By Slug
+func (u *PropertyUseCase) GetBySlug(ctx context.Context, slug string) (*model.PropertyResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	property := new(entity.Property)
+	err := u.ProperyRepo.FindBySlug(tx, property, slug, "Host", "Images", "Rentable", "Rentable.Amenities", "Amenities", "NearbyAttractions", "NearbyAttractions.TouristAttraction")
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			u.Log.WithError(err).Error("PROPERTY NOT FOUND BY SLUG.")
+			return nil, fiber.ErrNotFound
+		}
+		u.Log.WithError(err).Error("FAILED TO GET PROPERTY BY SLUG.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		u.Log.WithError(err).Error("FAILED TO COMMIT TRANSACTION.")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return model.PropertyToResponse(property), nil
 }
 
 // Get Property By ID

@@ -62,6 +62,7 @@ func (c RouteConfig) SetupUpload() {
 func (c RouteConfig) SetupProperty() {
 	property := c.App.Group("/api/properties")
 	property.Get("/", c.PropertyController.Search)
+	property.Get("/slug/:slug", c.PropertyController.GetBySlug)
 	property.Get("/:id", c.PropertyController.GetByID)
 
 	adminRoute := property.Group("/")

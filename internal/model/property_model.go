@@ -15,6 +15,7 @@ type PropertyImageResponse struct {
 
 type PropertyResponse struct {
 	ID                string                     `json:"id"`
+	Slug              string                     `json:"slug"`
 	PropertyType      string                     `json:"property_type"`
 	BookingType       string                     `json:"booking_type"`
 	Title             string                     `json:"title"`
@@ -54,6 +55,7 @@ type PropertyCreateRequest struct {
 	PropertyType string                       `json:"property_type"`
 	BookingType  string                       `json:"booking_type"`
 	Title        string                       `json:"title" validate:"required"`
+	Slug         string                       `json:"slug,omitempty"`
 	Address      string                       `json:"address" validate:"required"`
 	Description  string                       `json:"description" validate:"required"`
 	ThumbnailURL *string                      `json:"thumbnail_url,omitempty"`
@@ -83,6 +85,7 @@ func PropertyToResponse(property *entity.Property) *PropertyResponse {
 
 	return &PropertyResponse{
 		ID:                property.ID,
+		Slug:              property.Slug,
 		Host:              *host,
 		PropertyType:      property.PropertyType,
 		BookingType:       property.BookingType,

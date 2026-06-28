@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,22 +10,23 @@ import (
 )
 
 type Property struct {
-	ID           string  `gorm:"column:id;primaryKey"`
-	HostID       string  `gorm:"column:host_id;not null"`
-	PropertyType string  `gorm:"column:property_type;default:homestay"`
-	BookingType  string  `gorm:"column:booking_type"`
-	Title        string  `gorm:"column:title;not null"`
-	Address      string  `gorm:"column:address;not null"`
-	Description  string  `gorm:"column:description;type:text;not null"`
-	ThumbnailURL *string `gorm:"column:thumbnail_url"`
+	ID           string   `gorm:"column:id;primaryKey"`
+	HostID       string   `gorm:"column:host_id;not null"`
+	PropertyType string   `gorm:"column:property_type;default:homestay"`
+	BookingType  string   `gorm:"column:booking_type"`
+	Title        string   `gorm:"column:title;not null"`
+	Slug         string   `gorm:"column:slug;uniqueIndex;not null"`
+	Address      string   `gorm:"column:address;not null"`
+	Description  string   `gorm:"column:description;type:text;not null"`
+	ThumbnailURL *string  `gorm:"column:thumbnail_url"`
 	Lat          *float64 `gorm:"column:lat"`
 	Lng          *float64 `gorm:"column:lng"`
 
-	Host               HostProfile               `gorm:"foreignKey:HostID;references:ID;constraint:OnDelete:CASCADE"`
-	Images             []PropertyImage           `gorm:"foreignKey:PropertyID;constraint:OnDelete:CASCADE"`
-	Rentable           []Rentable
-	Amenities          []Amenity                 `gorm:"many2many:property_amenities;"`
-	NearbyAttractions  []PropertyNearbyAttraction `gorm:"foreignKey:PropertyID;constraint:OnDelete:CASCADE"`
+	Host              HostProfile                `gorm:"foreignKey:HostID;references:ID;constraint:OnDelete:CASCADE"`
+	Images            []PropertyImage            `gorm:"foreignKey:PropertyID;constraint:OnDelete:CASCADE"`
+	Rentable          []Rentable
+	Amenities         []Amenity                  `gorm:"many2many:property_amenities;"`
+	NearbyAttractions []PropertyNearbyAttraction `gorm:"foreignKey:PropertyID;constraint:OnDelete:CASCADE"`
 
 	CreatedAt int64 `gorm:"column:created_at"`
 	UpdatedAt int64 `gorm:"column:updated_at"`
@@ -35,9 +38,27 @@ func (Property) TableName() string {
 
 func (p *Property) BeforeCreate(tx *gorm.DB) (err error) {
 	p.ID = uuid.NewString()
+	if p.Slug == "" {
+		p.Slug = generateSlug(p.Title, p.ID[:8])
+	}
 	p.CreatedAt = time.Now().UnixMilli()
 	p.UpdatedAt = time.Now().UnixMilli()
 	return nil
+}
+
+var nonAlphanumHyphen = regexp.MustCompile(`[^a-z0-9-]`)
+var multiHyphen = regexp.MustCompile(`-+`)
+
+func generateSlug(title, suffix string) string {
+	s := strings.ToLower(title)
+	s = strings.ReplaceAll(s, " ", "-")
+	s = nonAlphanumHyphen.ReplaceAllString(s, "")
+	s = multiHyphen.ReplaceAllString(s, "-")
+	s = strings.Trim(s, "-")
+	if s == "" {
+		return suffix
+	}
+	return s + "-" + suffix
 }
 
 type PropertyImage struct {

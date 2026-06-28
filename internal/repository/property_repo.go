@@ -22,6 +22,14 @@ func (r *PropertyRepo) FindByHostID(db *gorm.DB, properties *[]entity.Property, 
 	return db.Where("host_id = ?", hostID).Find(properties).Error
 }
 
+func (r *PropertyRepo) FindBySlug(db *gorm.DB, property *entity.Property, slug string, preloads ...string) error {
+	query := db
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	return query.Where("slug = ?", slug).Take(property).Error
+}
+
 func (r *PropertyRepo) Search(
 	db *gorm.DB,
 	req *model.SearchPropertyRequest,

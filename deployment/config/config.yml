@@ -27,5 +27,17 @@ mail:
   username:
   password:
 
+wapisender:
+  api_key:
+  device_key:
+
 googe:
   clientId:
+
+doku:
+  client_id:
+  secret_key:
+  is_sandbox: true
+  success_url:
+  failed_url:
+  notification_url:
