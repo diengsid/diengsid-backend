@@ -19,8 +19,12 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    environment:
+      - API_URL=http://api:9000
     networks:
       - diengsid-net
+    depends_on:
+      - api
 
   cloudflared-api:
     image: cloudflare/cloudflared:latest

@@ -1,8 +1,8 @@
 @baseUrl = http://localhost:9000
 
 # Ganti dengan ID yang valid setelah membuat data
-@attractionId = your_attraction_id_here
-@propertyId   = your_property_id_here
+@attractionId = 2a0e8702-360c-41b8-bb47-7677377c2130
+@propertyId   = a68fa3a0-b4ad-4869-b2f0-9a41e5f16bf4
 
 ### ─── List Tourist Attractions ──────────────────────────────────────────────
 
@@ -18,8 +18,8 @@ POST {{baseUrl}}/api/tourist-attractions
 Content-Type: application/json
 
 {
-  "name": "Telaga Warna",
-  "slug": "telaga-warna",
+  "name": "Telaga Warna Tiga",
+  "slug": "telaga-warna-tiga",
   "description": "Danau kawah yang memiliki warna-warna indah akibat kandungan sulfur.",
   "address": "Dieng, Kejajar, Wonosobo, Jawa Tengah",
   "latitude": -7.2073,
@@ -114,8 +114,6 @@ Content-Type: application/json
   "attractions": [
     {
       "tourist_attraction_id": "{{attractionId}}",
-      "distance_km": 1.5,
-      "duration_minutes": 10,
       "sort_order": 1
     }
   ]
@@ -131,20 +129,14 @@ Content-Type: application/json
   "attractions": [
     {
       "tourist_attraction_id": "attraction_id_1",
-      "distance_km": 0.8,
-      "duration_minutes": 5,
       "sort_order": 1
     },
     {
       "tourist_attraction_id": "attraction_id_2",
-      "distance_km": 2.3,
-      "duration_minutes": 15,
       "sort_order": 2
     },
     {
       "tourist_attraction_id": "attraction_id_3",
-      "distance_km": 5.0,
-      "duration_minutes": 20,
       "sort_order": 3
     }
   ]
