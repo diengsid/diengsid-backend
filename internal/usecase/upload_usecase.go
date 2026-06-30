@@ -38,7 +38,7 @@ func (u *UploadUseCase) Upload(ctx context.Context, request *model.UploadRequest
 	}
 
 	// validasi ukuran (2MB)
-	if request.File.Size > 2*1024*1024 {
+	if request.File.Size > 10*1024*1024 {
 		u.Log.Error("FAILED TO COMMIT TRANSACTION.")
 		return nil, fiber.ErrBadRequest
 	}
